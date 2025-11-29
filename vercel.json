@@ -10,6 +10,7 @@
             "dest": "/api/index.php"
         }
     ],
+    "outputDirectory": "public/build",
     "env": {
         "APP_ENV": "production",
         "APP_DEBUG": "true",
@@ -23,6 +24,5 @@
         "SESSION_DRIVER": "cookie",
         "LOG_CHANNEL": "stderr",
         "ASSET_URL": "https://${VERCEL_URL}"
-    },
-    "outputDirectory": "public"
+    }
 }
