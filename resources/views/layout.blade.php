@@ -71,7 +71,7 @@
     </main>
 
     <footer class="text-center pb-10 text-stone-400 text-[10px] uppercase tracking-widest font-medium">
-        PolicyPulse © 2025 • Universitas Siber Muhammadiyah
+        PolicyPulse © 2025 • Rasendriya Khansa Jolankarfyan
     </footer>
 
     <script>
