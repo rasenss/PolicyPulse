@@ -8,11 +8,12 @@
     },
     "routes": [
         {
-            "src": "/build/(.*)",
-            "dest": "/public/build/$1"
+            "src": "/(build|assets)/(.*)",
+            "dest": "/public/$1/$2"
         },
         {
-            "handle": "filesystem"
+            "src": "/(.*\\.(ico|png|jpg|jpeg|svg|css|js|txt|xml))",
+            "dest": "/public/$1"
         },
         {
             "src": "/(.*)",
