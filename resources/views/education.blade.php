@@ -62,7 +62,7 @@
                     <div class="grid grid-cols-3 gap-6 md:gap-8 max-w-2xl mx-auto">
                         <div class="text-center">
                             <div class="text-2xl md:text-3xl font-bold text-orange-600 mb-1">9</div>
-                            <div class="text-xs md:text-sm text-stone-500 font-medium">Area Kebijakan</div>
+                            <div class="text-xs md:text-sm text-stone-500 font-medium">Kebijakan</div>
                         </div>
                         <div class="text-center">
                             <div class="text-2xl md:text-3xl font-bold text-orange-600 mb-1">10+</div>
@@ -70,7 +70,7 @@
                         </div>
                         <div class="text-center">
                             <div class="text-2xl md:text-3xl font-bold text-orange-600 mb-1">24/7</div>
-                            <div class="text-xs md:text-sm text-stone-500 font-medium">Ketersediaan Akses</div>
+                            <div class="text-xs md:text-sm text-stone-500 font-medium">Akses</div>
                         </div>
                     </div>
                 </div>
