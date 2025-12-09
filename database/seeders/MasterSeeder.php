@@ -9,109 +9,170 @@ class MasterSeeder extends Seeder
 {
     public function run(): void
     {
-        // Bersihkan data lama
         DB::statement('TRUNCATE TABLE questions RESTART IDENTITY CASCADE');
         DB::statement('TRUNCATE TABLE policies RESTART IDENTITY CASCADE');
 
-        // 1. DATA KEBIJAKAN (Tetap sama seperti request sebelumnya)
+        // 1. DATA KEBIJAKAN
         $policies = [
             [
                 'title' => 'Pemotongan Anggaran Kemendikdasmen Rp8 T',
                 'keyword_query' => '"Anggaran Pendidikan" OR "Kemendikdasmen" lang:id',
-                'description' => 'Pemerintah di bawah Presiden Prabowo memangkas anggaran Kementerian Pendidikan Dasar dan Menengah sebesar Rp8 triliun sebagai bagian dari reformasi anggaran nasional. Kebijakan ini memicu perdebatan sengit tentang prioritas pendidikan versus program lain, dengan kritik tajam dari kalangan pendidik.',
+                'description' => 'Pemerintah memangkas anggaran Kemendikdasmen Rp8 triliun sebagai bagian dari reformasi anggaran nasional.',
                 'source_link' => null,
                 'official_tweet_url' => 'https://x.com/CNNIndonesia/status/1888026349023150378'
             ],
             [
                 'title' => 'Penundaan ASN ke IKN Tanpa Batas Waktu',
                 'keyword_query' => '"ASN IKN" OR "Pindah IKN" lang:id',
-                'description' => 'Pemindahan Aparatur Sipil Negara (ASN) ke Ibu Kota Nusantara (IKN) yang semula dijadwalkan Januari 2025 ditunda tanpa jadwal pasti, terkait blokir anggaran IKN. Hal ini menyebabkan ketidakpastian proyek IKN, meski pembangunan tahap II berlanjut dengan standar internasional.',
+                'description' => 'Pemindahan ASN ke IKN ditunda tanpa jadwal pasti terkait blokir anggaran IKN.',
                 'source_link' => null,
                 'official_tweet_url' => 'https://x.com/CNNIndonesia/status/1885312911129837627'
             ],
             [
                 'title' => 'Realokasi Infrastruktur ke Makan Bergizi Gratis',
                 'keyword_query' => '"Makan Bergizi Gratis" OR "Anggaran Infrastruktur" lang:id',
-                'description' => 'Anggaran infrastruktur dipangkas untuk mendukung program MBG dengan alokasi Rp71 triliun, yang hanya cukup hingga Juni 2025. Potensi tambahan beban anggaran hingga Rp420 triliun per tahun menjadi sorotan, dengan fokus pemerintah bergeser pada penghematan untuk hilirisasi.',
+                'description' => 'Anggaran infrastruktur dipangkas untuk program MBG dengan alokasi Rp71 triliun.',
                 'source_link' => null,
                 'official_tweet_url' => 'https://x.com/CNNIndonesia/status/1879486753125671225'
             ],
             [
                 'title' => 'Satgas Penanganan Premanisme & Ormas',
                 'keyword_query' => '"Satgas Premanisme" OR "Ormas Investasi" lang:id',
-                'description' => 'Pemerintah membentuk satuan tugas (satgas) untuk menangani premanisme dan organisasi masyarakat (ormas) yang mengganggu investasi, sebagai kebijakan keamanan ekonomi. Diarahkan untuk menciptakan lingkungan investasi aman, dengan target seperti Jawa Barat bebas premanisme pada 2025.',
+                'description' => 'Satgas dibentuk untuk menangani premanisme dan ormas yang mengganggu investasi.',
                 'source_link' => null,
                 'official_tweet_url' => 'https://x.com/kompascom/status/1919945765968822307'
             ],
             [
                 'title' => 'Badan Pengelola Investasi Danantara',
                 'keyword_query' => '"Danantara" OR "BUMN" lang:id',
-                'description' => 'Pembentukan Badan Pengelola Investasi Daya Anagata Nusantara (Danantara) untuk mengelola aset seperti BUMN, GBK, dan aset Setneg lainnya, dengan target dana Rp14 ribu triliun. Kritikus menyoroti potensi konflik kepentingan karena rangkap jabatan, meskipun ditujukan untuk investasi masa depan.',
+                'description' => 'Danantara dibentuk untuk mengelola aset BUMN dengan target dana Rp14 ribu triliun.',
                 'source_link' => null,
                 'official_tweet_url' => 'https://x.com/CNNIndonesia/status/1916842782238654631'
             ],
         ];
         DB::table('policies')->insert($policies);
 
-        // 2. SOAL PILIHAN GANDA (EXPERT)
-        $mcqs = [];
-        $topics = [
-            ['q' => 'Mengapa pemangkasan anggaran pendidikan demi efisiensi jangka pendek sering disebut sebagai "Myopic Policy" (Kebijakan Rabun Jauh)?', 'a' => 'Karena mengorbankan Human Capital jangka panjang demi likuiditas sesaat', 'opts' => ['A'=>'Karena biaya pendidikan murah', 'B'=>'Karena mengorbankan Human Capital jangka panjang demi likuiditas sesaat', 'C'=>'Karena guru protes', 'D'=>'Karena sekolah libur', 'E'=>'Karena buku mahal']],
-            ['q' => 'Dalam teori investasi, ketidakpastian jadwal IKN menciptakan risiko "Regulatory Risk". Apa dampak logisnya?', 'a' => 'Investor akan menahan modal (Wait and See) atau meminta risk premium tinggi', 'opts' => ['A'=>'Investor langsung masuk', 'B'=>'Investor akan menahan modal (Wait and See) atau meminta risk premium tinggi', 'C'=>'Rupiah menguat', 'D'=>'Inflasi turun', 'E'=>'Ekspor naik']],
-            ['q' => 'Secara logika ekonomi, memindahkan anggaran Infrastruktur (Belanja Modal) ke Makan Gratis (Belanja Barang) akan mengakibatkan...', 'a' => 'Penurunan aset produktif negara dalam neraca jangka panjang', 'opts' => ['A'=>'Kenaikan aset', 'B'=>'Penurunan aset produktif negara dalam neraca jangka panjang', 'C'=>'Jalan tol bertambah', 'D'=>'Deflasi', 'E'=>'Surplus anggaran']],
-            ['q' => 'Konflik kepentingan (Conflict of Interest) pada Danantara terjadi secara logis ketika...', 'a' => 'Satu entitas menjadi pembuat aturan sekaligus pemain pasar', 'opts' => ['A'=>'Modal kurang', 'B'=>'Satu entitas menjadi pembuat aturan sekaligus pemain pasar', 'C'=>'Pegawai banyak', 'D'=>'Kantor jauh', 'E'=>'BUMN rugi']],
-            ['q' => 'Mengapa pendekatan represif Satgas Premanisme secara logika sosiologis tidak akan menyelesaikan masalah secara permanen?', 'a' => 'Karena tidak menyentuh akar penyebab yaitu kemiskinan struktural', 'opts' => ['A'=>'Biaya mahal', 'B'=>'Karena tidak menyentuh akar penyebab yaitu kemiskinan struktural', 'C'=>'Polisi takut', 'D'=>'Preman punya izin', 'E'=>'Masyarakat suka']],
+        // 2. SOAL MCQ (40 Soal) - SEMI EXPERT DENGAN KONTEKS JELAS
+        $mcqs = [
+            // BLOK 1: Pemotongan Anggaran Pendidikan (8 Soal)
+            ['type'=>'mcq','question_text'=>'Pemerintah memotong anggaran Kemendikdasmen sebesar Rp8 triliun. Menurut UUD 1945, ketentuan apa yang berpotensi dilanggar oleh kebijakan ini?','options'=>json_encode(['A'=>'Pasal 28 tentang kebebasan berserikat','B'=>'Pasal 31 ayat 4 yang mewajibkan minimal 20% APBN untuk pendidikan','C'=>'Pasal 33 tentang perekonomian nasional','D'=>'UU Sisdiknas tentang wajib belajar 9 tahun','E'=>'Tidak ada ketentuan yang dilanggar']),'correct_answer'=>'B','explanation'=>'Pasal 31 ayat 4 UUD 1945 secara eksplisit mewajibkan negara mengalokasikan minimal 20% dari APBN dan APBD untuk sektor pendidikan.'],
+            
+            ['type'=>'mcq','question_text'=>'Dalam ilmu ekonomi, investasi pendidikan disebut "human capital investment". Jika anggaran pendidikan dipotong Rp8 T, dampak jangka panjang yang paling mungkin terjadi adalah?','options'=>json_encode(['A'=>'Inflasi akan meningkat dalam 1-2 tahun','B'=>'Produktivitas dan daya saing tenaga kerja Indonesia menurun dalam 10-20 tahun ke depan','C'=>'Ekspor Indonesia akan langsung berkurang','D'=>'Nilai tukar rupiah akan melemah','E'=>'Harga sembako akan naik drastis']),'correct_answer'=>'B','explanation'=>'Teori human capital menunjukkan bahwa investasi pendidikan meningkatkan produktivitas tenaga kerja. Pemotongan anggaran akan berdampak pada kualitas SDM generasi mendatang.'],
+            
+            ['type'=>'mcq','question_text'=>'Pemotongan anggaran pendidikan berarti ada program yang harus dikorbankan. Dalam ekonomi, kerugian dari pilihan yang tidak diambil disebut "opportunity cost". Siapa yang paling menanggung opportunity cost dari kebijakan ini?','options'=>json_encode(['A'=>'Pensiunan PNS yang sudah tidak aktif','B'=>'Generasi muda yang kehilangan kesempatan pendidikan berkualitas','C'=>'Pengusaha properti di kota besar','D'=>'Importir barang elektronik','E'=>'Pegawai BUMN yang sudah mapan']),'correct_answer'=>'B','explanation'=>'Generasi muda menanggung opportunity cost terbesar karena mereka kehilangan kesempatan memperoleh pendidikan berkualitas yang akan mempengaruhi masa depan mereka.'],
+            
+            ['type'=>'mcq','question_text'=>'Pemerintah berargumen pemotongan dilakukan untuk "efisiensi anggaran". Namun, kebijakan ini bertentangan dengan prinsip pembangunan apa?','options'=>json_encode(['A'=>'Prinsip balanced budget (anggaran berimbang)','B'=>'Prinsip investasi pembangunan manusia (human development investment)','C'=>'Prinsip perdagangan bebas (free trade)','D'=>'Prinsip kebijakan moneter ketat','E'=>'Prinsip deregulasi ekonomi']),'correct_answer'=>'B','explanation'=>'Pendidikan adalah investasi jangka panjang untuk pembangunan manusia. Memotong anggaran pendidikan demi efisiensi jangka pendek bertentangan dengan prinsip pembangunan berkelanjutan.'],
+            
+            ['type'=>'mcq','question_text'=>'Jika pemotongan anggaran pendidikan Rp8 T terus berlanjut, indikator pembangunan apa yang akan terdampak negatif dalam 5-10 tahun ke depan?','options'=>json_encode(['A'=>'Cadangan devisa dan neraca perdagangan','B'=>'Human Development Index (HDI) dan GDP per kapita','C'=>'Suku bunga acuan Bank Indonesia','D'=>'Harga saham di Bursa Efek Indonesia','E'=>'Tingkat inflasi bulanan']),'correct_answer'=>'B','explanation'=>'HDI mengukur kualitas hidup termasuk pendidikan. Penurunan kualitas pendidikan akan menurunkan HDI dan produktivitas yang mempengaruhi GDP per kapita.'],
+            
+            ['type'=>'mcq','question_text'=>'Untuk memastikan pemotongan anggaran tidak disalahgunakan, mekanisme pengawasan apa yang seharusnya diaktifkan?','options'=>json_encode(['A'=>'Survei kepuasan masyarakat melalui media sosial','B'=>'Audit oleh BPK dan pengawasan fungsi anggaran DPR','C'=>'Laporan internal kementerian saja sudah cukup','D'=>'Evaluasi tahunan oleh presiden','E'=>'Penilaian oleh lembaga donor internasional']),'correct_answer'=>'B','explanation'=>'BPK (Badan Pemeriksa Keuangan) bertugas mengaudit penggunaan anggaran negara, sementara DPR memiliki fungsi pengawasan terhadap pelaksanaan APBN.'],
+            
+            ['type'=>'mcq','question_text'=>'Indonesia menganut sistem desentralisasi dimana daerah menerima dana dari pusat. Jika anggaran pendidikan pusat dipotong, komponen transfer daerah apa yang akan berkurang?','options'=>json_encode(['A'=>'Dana Bagi Hasil (DBH) dari pajak','B'=>'Dana Alokasi Umum (DAU) dan Dana Alokasi Khusus (DAK) bidang pendidikan','C'=>'Dana desa untuk infrastruktur','D'=>'Retribusi parkir daerah','E'=>'Pajak kendaraan bermotor']),'correct_answer'=>'B','explanation'=>'DAU dan DAK adalah mekanisme transfer pusat ke daerah. Pemotongan anggaran pendidikan pusat akan mengurangi DAK bidang pendidikan yang diterima daerah.'],
+            
+            ['type'=>'mcq','question_text'=>'Seorang Bupati harus menyikapi pengurangan DAK Pendidikan akibat pemotongan anggaran pusat. Strategi apa yang paling bijak tanpa mengorbankan kualitas pendidikan?','options'=>json_encode(['A'=>'Langsung menaikkan pajak daerah 50%','B'=>'Melakukan efisiensi birokrasi dan menggandeng CSR perusahaan swasta','C'=>'Menutup separuh sekolah negeri','D'=>'Mengurangi jam belajar menjadi 3 jam sehari','E'=>'Memberhentikan semua guru honorer tanpa pesangon']),'correct_answer'=>'B','explanation'=>'Efisiensi birokrasi (mengurangi pengeluaran tidak perlu) dan kemitraan dengan swasta melalui CSR adalah solusi yang tidak membebani masyarakat dan tidak mengorbankan kualitas.'],
+
+            // BLOK 2: Penundaan IKN (8 Soal)
+            ['type'=>'mcq','question_text'=>'Pemindahan ASN ke IKN ditunda tanpa batas waktu karena anggaran diblokir. Dalam manajemen proyek besar, situasi ini menunjukkan risiko apa yang tidak diantisipasi dengan baik?','options'=>json_encode(['A'=>'Risiko teknis konstruksi bangunan','B'=>'Risiko fiskal dan keberlanjutan anggaran lintas pemerintahan','C'=>'Risiko gempa bumi di lokasi IKN','D'=>'Risiko serangan siber pada sistem pemerintahan','E'=>'Risiko penolakan dari masyarakat adat']),'correct_answer'=>'B','explanation'=>'Blokir anggaran menunjukkan bahwa risiko fiskal (kemampuan keuangan negara) dan keberlanjutan komitmen anggaran lintas periode pemerintahan tidak diantisipasi dengan matang.'],
+            
+            ['type'=>'mcq','question_text'=>'Pemerintah sudah mengeluarkan triliunan rupiah untuk IKN. Dalam ekonomi, dana yang sudah dikeluarkan dan tidak bisa ditarik kembali disebut apa?','options'=>json_encode(['A'=>'Return on Investment (ROI)','B'=>'Sunk Cost - biaya yang sudah keluar dan tidak bisa dikembalikan','C'=>'Opportunity Cost - biaya peluang','D'=>'Fixed Cost - biaya tetap','E'=>'Variable Cost - biaya variabel']),'correct_answer'=>'B','explanation'=>'Sunk cost adalah biaya yang sudah dikeluarkan dan tidak dapat dikembalikan apapun keputusan selanjutnya. Triliunan yang sudah diinvestasikan di IKN adalah sunk cost.'],
+            
+            ['type'=>'mcq','question_text'=>'Seorang investor asing sedang mempertimbangkan investasi di IKN. Ketidakpastian penundaan proyek akan membuat investor tersebut menghitung ulang apa?','options'=>json_encode(['A'=>'Jumlah karyawan yang dibutuhkan','B'=>'Country risk premium - tambahan imbal hasil karena risiko ketidakpastian kebijakan','C'=>'Desain arsitektur bangunan','D'=>'Menu kantin untuk karyawan','E'=>'Warna seragam perusahaan']),'correct_answer'=>'B','explanation'=>'Risk premium adalah tambahan imbal hasil yang diminta investor untuk mengkompensasi risiko. Ketidakpastian kebijakan meningkatkan risk premium Indonesia di mata investor.'],
+            
+            ['type'=>'mcq','question_text'=>'IKN direncanakan dibiayai 80% dari investor swasta melalui skema kemitraan. Skema pembiayaan dimana pemerintah dan swasta berbagi risiko dan keuntungan disebut?','options'=>json_encode(['A'=>'Government to Government (G2G) Loan','B'=>'Public Private Partnership (PPP) atau Kerjasama Pemerintah dan Badan Usaha','C'=>'100% APBN murni','D'=>'Crowdfunding dari masyarakat','E'=>'Pinjaman IMF']),'correct_answer'=>'B','explanation'=>'PPP atau KPBU adalah skema dimana pemerintah dan swasta bermitra dalam pembiayaan, pembangunan, dan pengelolaan infrastruktur dengan berbagi risiko dan keuntungan.'],
+            
+            ['type'=>'mcq','question_text'=>'Beberapa kontraktor sudah menandatangani kontrak pembangunan IKN. Jika proyek ditunda, kontraktor dapat mengajukan klaim apa?','options'=>json_encode(['A'=>'Klaim bonus penyelesaian cepat','B'=>'Klaim force majeure atau renegosiasi kontrak karena perubahan kebijakan','C'=>'Klaim kenaikan gaji karyawan','D'=>'Tidak bisa mengajukan klaim apapun','E'=>'Klaim pembatalan otomatis tanpa kompensasi']),'correct_answer'=>'B','explanation'=>'Force majeure adalah kondisi luar biasa yang menghalangi pelaksanaan kontrak. Perubahan kebijakan pemerintah dapat menjadi dasar klaim atau renegosiasi kontrak.'],
+            
+            ['type'=>'mcq','question_text'=>'IKN dimulai era Presiden Jokowi, lalu dilanjutkan/diubah oleh presiden berikutnya. Konsep dimana kebijakan strategis harus dijaga kesinambungannya lintas pemerintahan disebut?','options'=>json_encode(['A'=>'Policy discontinuity - kebijakan yang terputus','B'=>'Policy continuity - kesinambungan kebijakan lintas pemerintahan','C'=>'Policy maker - pembuat kebijakan','D'=>'Policy reform - reformasi kebijakan','E'=>'Policy reversal - pembalikan kebijakan']),'correct_answer'=>'B','explanation'=>'Policy continuity adalah prinsip dimana kebijakan strategis jangka panjang dijaga kesinambungannya meskipun terjadi pergantian pemerintahan untuk menjaga kepercayaan dan stabilitas.'],
+            
+            ['type'=>'mcq','question_text'=>'Dari kasus IKN, pelajaran apa yang bisa diambil untuk perencanaan proyek mega infrastruktur di masa depan?','options'=>json_encode(['A'=>'Proyek besar pasti selalu gagal jadi tidak usah direncanakan','B'=>'Pentingnya studi kelayakan mendalam dan jaminan komitmen anggaran multi-tahun','C'=>'Lebih baik tidak ada perencanaan sama sekali','D'=>'Serahkan semua ke swasta tanpa keterlibatan pemerintah','E'=>'Jangan pernah memulai proyek jangka panjang']),'correct_answer'=>'B','explanation'=>'Studi kelayakan (feasibility study) yang komprehensif dan komitmen anggaran yang mengikat lintas pemerintahan sangat penting untuk proyek mega infrastruktur jangka panjang.'],
+            
+            ['type'=>'mcq','question_text'=>'Jika IKN akhirnya dibatalkan total, alternatif kebijakan apa yang paling rasional untuk mengatasi masalah kepadatan Jakarta?','options'=>json_encode(['A'=>'Tidak melakukan apapun dan biarkan Jakarta semakin padat','B'=>'Revitalisasi Jakarta dan percepatan desentralisasi ekonomi ke kota-kota lain','C'=>'Pindahkan ibu kota ke Surabaya secara mendadak','D'=>'Jual semua aset yang sudah dibangun di IKN','E'=>'Minta IMF membiayai ibu kota baru']),'correct_answer'=>'B','explanation'=>'Revitalisasi Jakarta (perbaikan transportasi, tata kota) dikombinasikan dengan desentralisasi ekonomi ke kota-kota lain adalah alternatif yang lebih realistis dan terukur.'],
+
+            // BLOK 3: MBG - Makan Bergizi Gratis (8 Soal)
+            ['type'=>'mcq','question_text'=>'Program MBG menghabiskan Rp71 triliun. Dalam analisis kebijakan, program ini dianggap efektif jika memenuhi syarat apa?','options'=>json_encode(['A'=>'Semua anggaran terserap 100% tanpa sisa','B'=>'Manfaat (penurunan stunting) lebih besar dari biaya program','C'=>'Semua anak Indonesia makan gratis tanpa pengecualian','D'=>'Tidak ada berita negatif di media','E'=>'Semua vendor makanan mendapat keuntungan besar']),'correct_answer'=>'B','explanation'=>'Cost-Benefit Analysis mengukur efektivitas program dengan membandingkan manfaat yang dihasilkan (outcome seperti penurunan stunting) dengan biaya yang dikeluarkan.'],
+            
+            ['type'=>'mcq','question_text'=>'Program MBG ditujukan untuk anak kurang mampu. Namun ada risiko keluarga mampu juga ikut menikmati program ini. Dalam ekonomi, penyimpangan ini disebut?','options'=>json_encode(['A'=>'Adverse selection - seleksi yang merugikan','B'=>'Moral hazard - penyimpangan perilaku karena adanya jaminan','C'=>'Market failure - kegagalan pasar','D'=>'Externality - dampak eksternal','E'=>'Monopoly - penguasaan pasar']),'correct_answer'=>'B','explanation'=>'Moral hazard terjadi ketika adanya jaminan (makanan gratis) membuat orang berperilaku menyimpang, seperti keluarga mampu yang seharusnya tidak berhak ikut memanfaatkan program.'],
+            
+            ['type'=>'mcq','question_text'=>'Agar MBG tepat sasaran, pemerintah perlu data akurat tentang keluarga miskin. Database resmi yang digunakan untuk targeting program sosial di Indonesia adalah?','options'=>json_encode(['A'=>'Data media sosial masyarakat','B'=>'Data Terpadu Kesejahteraan Sosial (DTKS) dari Kemensos','C'=>'Data dari RT/RW setempat saja','D'=>'Pendaftaran mandiri siapa saja yang mau','E'=>'Data random sampling BPS']),'correct_answer'=>'B','explanation'=>'DTKS adalah database resmi yang berisi data keluarga miskin dan rentan di Indonesia, digunakan sebagai basis targeting berbagai program bantuan sosial pemerintah.'],
+            
+            ['type'=>'mcq','question_text'=>'Anggaran MBG Rp71 T diambil dari realokasi anggaran infrastruktur. Dalam ekonomi, setiap rupiah untuk MBG berarti mengorbankan pembangunan jalan/jembatan. Konsep ini disebut?','options'=>json_encode(['A'=>'Comparative advantage - keunggulan komparatif','B'=>'Opportunity cost - biaya peluang dari pilihan yang dikorbankan','C'=>'Absolute advantage - keunggulan absolut','D'=>'Market failure - kegagalan pasar','E'=>'Positive externality - dampak positif eksternal']),'correct_answer'=>'B','explanation'=>'Opportunity cost adalah nilai dari pilihan terbaik yang dikorbankan. Setiap rupiah untuk MBG adalah rupiah yang tidak bisa digunakan untuk infrastruktur.'],
+            
+            ['type'=>'mcq','question_text'=>'Untuk mengukur keberhasilan MBG, indikator apa yang seharusnya menjadi fokus evaluasi dalam 3 tahun pertama?','options'=>json_encode(['A'=>'Jumlah porsi makanan yang terdistribusi (output)','B'=>'Penurunan prevalensi stunting dan anemia pada anak (outcome)','C'=>'Tingkat kepuasan vendor makanan','D'=>'Jumlah sekolah yang terdaftar program','E'=>'Frekuensi liputan positif di media']),'correct_answer'=>'B','explanation'=>'Outcome indicator (hasil nyata seperti penurunan stunting) lebih penting dari output indicator (jumlah porsi). Yang diukur adalah dampak kesehatan, bukan sekadar distribusi makanan.'],
+            
+            ['type'=>'mcq','question_text'=>'Di tengah pelaksanaan MBG, ditemukan banyak makanan tidak dimakan atau kualitas gizi tidak sesuai standar. Mekanisme evaluasi yang tepat adalah?','options'=>json_encode(['A'=>'Langsung tutup program dan kembalikan anggaran','B'=>'Mid-term review untuk perbaikan desain program tanpa menghentikan','C'=>'Tambah anggaran 2x lipat tanpa evaluasi','D'=>'Ganti semua vendor tanpa analisis masalah','E'=>'Salahkan pemerintahan sebelumnya']),'correct_answer'=>'B','explanation'=>'Mid-term review adalah evaluasi di tengah program untuk mengidentifikasi masalah dan melakukan perbaikan desain, tanpa harus membatalkan program yang sudah berjalan.'],
+            
+            ['type'=>'mcq','question_text'=>'Program MBG melibatkan makanan (gizi), sekolah (pendidikan), dan keluarga miskin (sosial). Koordinasi lintas kementerian yang paling kritis adalah antara?','options'=>json_encode(['A'=>'Kementerian Pertahanan dan Kementerian Luar Negeri','B'=>'Kemendikbud (sekolah), Kemenkes (standar gizi), dan Kemensos (data penerima)','C'=>'Kementerian Keuangan dan Bank Indonesia','D'=>'Kementerian PUPR dan Kementerian Perhubungan','E'=>'Kementerian Agama dan Kementerian Dalam Negeri']),'correct_answer'=>'B','explanation'=>'MBG membutuhkan koordinasi Kemendikbud (lokasi distribusi di sekolah), Kemenkes (standar nutrisi dan pengawasan), dan Kemensos (data keluarga penerima manfaat).'],
+            
+            ['type'=>'mcq','question_text'=>'Agar MBG bisa berjalan jangka panjang (10+ tahun), faktor keberlanjutan (sustainability) yang paling menentukan adalah?','options'=>json_encode(['A'=>'Bantuan donor internasional yang konsisten','B'=>'Komitmen fiskal pemerintah dan efisiensi implementasi program','C'=>'Harga komoditas pangan dunia yang stabil','D'=>'Cuaca yang mendukung pertanian','E'=>'Nilai tukar rupiah terhadap dollar']),'correct_answer'=>'B','explanation'=>'Program sosial berkelanjutan jika ada komitmen fiskal (anggaran yang dijamin) dan implementasi efisien (biaya per penerima yang optimal). Faktor internal lebih bisa dikontrol.'],
+
+            // BLOK 4: Satgas Premanisme (8 Soal)
+            ['type'=>'mcq','question_text'=>'World Bank menilai kemudahan berbisnis (ease of doing business) suatu negara. Jika premanisme marak, komponen biaya apa yang meningkat bagi pengusaha?','options'=>json_encode(['A'=>'Biaya listrik dan air','B'=>'Informal transaction cost - biaya transaksi tidak resmi seperti pungli','C'=>'Biaya gaji karyawan','D'=>'Biaya bahan baku produksi','E'=>'Biaya sewa gedung kantor']),'correct_answer'=>'B','explanation'=>'Premanisme menciptakan informal transaction cost (biaya pungli, uang keamanan, dll) yang tidak tercatat resmi tetapi membebani operasional usaha dan menurunkan daya saing.'],
+            
+            ['type'=>'mcq','question_text'=>'Satgas Premanisme bertujuan menegakkan hukum terhadap pelaku pemerasan. Prinsip dimana hukum ditegakkan secara konsisten untuk semua orang tanpa pandang bulu disebut?','options'=>json_encode(['A'=>'Law of the jungle - hukum rimba','B'=>'Rule of law - supremasi hukum yang adil dan konsisten','C'=>'Martial law - hukum darurat militer','D'=>'Common law - hukum kebiasaan','E'=>'Natural law - hukum alam']),'correct_answer'=>'B','explanation'=>'Rule of law adalah prinsip dimana hukum berlaku sama untuk semua orang, termasuk oknum berpengaruh yang menjadi backing preman, tanpa diskriminasi.'],
+            
+            ['type'=>'mcq','question_text'=>'Banyak preman beroperasi karena memiliki "backing" dari oknum aparat. Tantangan sistemik terbesar bagi Satgas Premanisme adalah?','options'=>json_encode(['A'=>'Kekurangan anggaran operasional','B'=>'Memutus rantai kolusi antara oknum aparat dengan preman','C'=>'Teknologi komunikasi yang ketinggalan','D'=>'Jumlah personel yang kurang','E'=>'Gedung kantor yang tidak memadai']),'correct_answer'=>'B','explanation'=>'Kolusi oknum aparat-preman (backing system) adalah akar sistemik premanisme. Tanpa memutus rantai ini, penangkapan preman hanya bersifat sementara.'],
+            
+            ['type'=>'mcq','question_text'=>'Ada dua pendekatan mengatasi premanisme: represif (tangkap dan hukum) dan preventif (cegah sebelum terjadi). Untuk solusi jangka panjang, pendekatan mana yang lebih efektif?','options'=>json_encode(['A'=>'Represif saja karena membuat efek jera','B'=>'Preventif melalui pemberdayaan ekonomi dan pendidikan untuk mengurangi akar masalah','C'=>'Keduanya tidak efektif sama sekali','D'=>'Represif seberat-beratnya sudah cukup','E'=>'Preventif terlalu lama dan tidak praktis']),'correct_answer'=>'B','explanation'=>'Pendekatan preventif (pemberdayaan ekonomi, pendidikan, lapangan kerja) mengatasi akar masalah (kemiskinan, pengangguran) yang mendorong seseorang menjadi preman.'],
+            
+            ['type'=>'mcq','question_text'=>'Untuk mengukur keberhasilan Satgas Premanisme, indikator yang terukur dan relevan adalah?','options'=>json_encode(['A'=>'Jumlah preman yang ditangkap per bulan','B'=>'Penurunan laporan pungli dan kenaikan skor ease of doing business','C'=>'Frekuensi Satgas tampil di media','D'=>'Jumlah rapat koordinasi yang diadakan','E'=>'Persentase anggaran yang terserap']),'correct_answer'=>'B','explanation'=>'Outcome yang terukur adalah penurunan kasus pungli (dari laporan masyarakat) dan perbaikan iklim usaha (skor ease of doing business), bukan sekadar jumlah penangkapan.'],
+            
+            ['type'=>'mcq','question_text'=>'Masyarakat sipil dapat berperan mendukung pemberantasan premanisme. Bentuk partisipasi yang paling efektif adalah?','options'=>json_encode(['A'=>'Main hakim sendiri terhadap preman','B'=>'Melaporkan (whistleblowing) dan melakukan pemantauan independen','C'=>'Membayar preman agar tidak mengganggu','D'=>'Pindah usaha ke daerah lain','E'=>'Diam saja dan pasrah']),'correct_answer'=>'B','explanation'=>'Whistleblowing (pelaporan) dan pemantauan independen oleh masyarakat/LSM membantu mengungkap praktik premanisme dan memastikan akuntabilitas penegakan hukum.'],
+            
+            ['type'=>'mcq','question_text'=>'Jika Satgas Premanisme berhasil di Jawa Barat sebagai pilot project, strategi untuk menerapkannya di provinsi lain adalah?','options'=>json_encode(['A'=>'Copy paste langsung tanpa penyesuaian','B'=>'Adaptasi model sesuai konteks lokal sambil menerapkan lesson learned','C'=>'Tunggu instruksi dari pusat tanpa inisiatif','D'=>'Serahkan sepenuhnya ke pemerintah daerah tanpa panduan','E'=>'Buat satgas baru yang berbeda total di setiap provinsi']),'correct_answer'=>'B','explanation'=>'Scaling up yang efektif membutuhkan adaptasi konteks lokal (kondisi preman tiap daerah berbeda) sambil menerapkan lesson learned (pelajaran yang berhasil) dari pilot project.'],
+            
+            ['type'=>'mcq','question_text'=>'Premanisme lebih subur di sektor informal (pedagang kaki lima, pasar tradisional) dibandingkan sektor formal (mall, perkantoran). Mengapa demikian?','options'=>json_encode(['A'=>'Sektor formal lebih banyak premannya','B'=>'Sektor informal minim pengawasan dan perlindungan hukum formal','C'=>'Pedagang formal lebih berani melawan','D'=>'Preman tidak tertarik sektor informal','E'=>'Sektor informal dilindungi polisi']),'correct_answer'=>'B','explanation'=>'Sektor informal beroperasi di luar sistem formal sehingga minim pengawasan keamanan resmi dan perlindungan hukum, menjadikannya sasaran empuk premanisme.'],
+
+            // BLOK 5: Danantara (8 Soal)
+            ['type'=>'mcq','question_text'=>'Danantara dibentuk untuk mengelola aset negara seperti BUMN. Model ini mirip dengan lembaga pengelola kekayaan negara (sovereign wealth fund) di negara lain seperti?','options'=>json_encode(['A'=>'IMF (International Monetary Fund)','B'=>'Temasek Holdings (Singapura) dan Khazanah Nasional (Malaysia)','C'=>'World Bank (Bank Dunia)','D'=>'Asian Development Bank (ADB)','E'=>'Federal Reserve (Bank Sentral AS)']),'correct_answer'=>'B','explanation'=>'Temasek (Singapura) dan Khazanah (Malaysia) adalah sovereign wealth fund (SWF) di ASEAN yang mengelola aset negara untuk investasi, menjadi benchmark regional untuk Danantara.'],
+            
+            ['type'=>'mcq','question_text'=>'Danantara akan mengelola aset triliunan rupiah milik negara. Prinsip tata kelola (good governance) yang paling kritis untuk lembaga ini adalah?','options'=>json_encode(['A'=>'Ekspansi agresif untuk keuntungan maksimal','B'=>'Transparansi, akuntabilitas, dan independensi dari intervensi politik','C'=>'Monopoli pasar domestik','D'=>'Proteksionisme terhadap investor asing','E'=>'Kerahasiaan penuh tanpa keterbukaan informasi']),'correct_answer'=>'B','explanation'=>'Sovereign wealth fund membutuhkan transparansi (keterbukaan informasi), akuntabilitas (pertanggungjawaban), dan independensi dari intervensi politik untuk menjaga kepercayaan publik.'],
+            
+            ['type'=>'mcq','question_text'=>'Beberapa pejabat Danantara juga menjabat di BUMN yang dikelolanya. Dalam tata kelola perusahaan, situasi ini berisiko menimbulkan?','options'=>json_encode(['A'=>'Efisiensi yang meningkat','B'=>'Conflict of interest - benturan kepentingan dalam pengambilan keputusan','C'=>'Sinergi yang lebih baik','D'=>'Tidak ada risiko sama sekali','E'=>'Penghematan biaya gaji']),'correct_answer'=>'B','explanation'=>'Rangkap jabatan menciptakan conflict of interest dimana seseorang bisa membuat keputusan yang menguntungkan posisinya di satu tempat namun merugikan di tempat lain.'],
+            
+            ['type'=>'mcq','question_text'=>'Mengingat Danantara mengelola dana publik yang sangat besar, mekanisme pengawasan yang ideal adalah?','options'=>json_encode(['A'=>'Diawasi Presiden saja sudah cukup','B'=>'Multi-layer oversight: DPR, BPK, dan dewan pengawas independen','C'=>'Internal audit tanpa pengawasan eksternal','D'=>'Pengawasan media massa saja','E'=>'Tidak perlu pengawasan karena dikelola profesional']),'correct_answer'=>'B','explanation'=>'Dana publik sebesar itu membutuhkan multi-layer oversight: DPR (pengawasan politik), BPK (audit keuangan), dan dewan pengawas independen (profesional) untuk checks and balances.'],
+            
+            ['type'=>'mcq','question_text'=>'Jika investasi Danantara mengalami kerugian besar, implikasinya terhadap keuangan negara adalah?','options'=>json_encode(['A'=>'Tidak ada dampak karena terpisah dari APBN','B'=>'Menjadi contingent liability yang berpotensi membebani APBN','C'=>'Otomatis ditanggung swasta','D'=>'Akan dibiayai IMF','E'=>'Kerugian tidak mungkin terjadi']),'correct_answer'=>'B','explanation'=>'Kerugian SWF milik negara menjadi contingent liability (kewajiban bersyarat) yang berpotensi membebani APBN jika harus diselamatkan dengan dana negara.'],
+            
+            ['type'=>'mcq','question_text'=>'Standar internasional untuk tata kelola sovereign wealth fund adalah Santiago Principles. Prinsip ini mengatur tentang?','options'=>json_encode(['A'=>'Cara melakukan akuisisi perusahaan asing','B'=>'Praktik terbaik transparansi, akuntabilitas, dan tata kelola SWF','C'=>'Pembagian dividen kepada masyarakat','D'=>'Regulasi perbankan internasional','E'=>'Penetapan suku bunga global']),'correct_answer'=>'B','explanation'=>'Santiago Principles (2008) adalah 24 prinsip yang menjadi standar internasional untuk transparansi, akuntabilitas, dan tata kelola SWF yang baik.'],
+            
+            ['type'=>'mcq','question_text'=>'Danantara berencana berinvestasi di berbagai sektor (energi, keuangan, infrastruktur). Strategi diversifikasi portofolio ini penting untuk?','options'=>json_encode(['A'=>'Terlihat lebih canggih dan modern','B'=>'Mengurangi risiko konsentrasi jika satu sektor merugi','C'=>'Memudahkan pelaporan keuangan','D'=>'Menaikkan gaji direksi','E'=>'Memuaskan politisi di DPR']),'correct_answer'=>'B','explanation'=>'Diversifikasi portofolio mengurangi risiko konsentrasi - jika satu sektor/investasi merugi, sektor lain bisa mengkompensasi sehingga total portofolio tetap sehat.'],
+            
+            ['type'=>'mcq','question_text'=>'Jika Danantara (BUMN) terlalu mendominasi ekonomi, investor swasta bisa tersingkir dari peluang bisnis yang sehat. Fenomena ini disebut?','options'=>json_encode(['A'=>'Market efficiency - efisiensi pasar','B'=>'Crowding out effect - tersingkirnya investasi swasta oleh dominasi pemerintah','C'=>'Trickle down effect - efek menetes ke bawah','D'=>'Multiplier effect - efek pengganda','E'=>'Network effect - efek jaringan']),'correct_answer'=>'B','explanation'=>'Crowding out effect terjadi ketika ekspansi BUMN/pemerintah menyingkirkan investasi swasta karena swasta kalah bersaing dengan entitas yang didukung negara.'],
         ];
 
-        for ($i = 1; $i <= 40; $i++) {
-            $t = $topics[($i - 1) % count($topics)];
-            $mcqs[] = [
-                'type' => 'mcq',
-                'question_text' => "Logika Kebijakan No. $i: " . $t['q'],
-                'options' => json_encode($t['opts']),
-                'correct_answer' => $t['a'],
-                'explanation' => 'Berdasarkan logika ekonomi dan kebijakan publik.',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
+        foreach ($mcqs as &$mcq) {
+            $mcq['created_at'] = now();
+            $mcq['updated_at'] = now();
         }
         DB::table('questions')->insert($mcqs);
 
-        // 3. SOAL ESSAY (LOGIKA & COMMON SENSE - NO CASE STUDY)
-        $essays = [];
-        $essay_prompts = [
-            'Secara logika, jika anggaran pendidikan dipotong hari ini, berapa tahun lagi dampak penurunannya akan terasa pada ekonomi negara? Jelaskan alur sebab-akibatnya.',
-            'Jika investor butuh kepastian hukum, mengapa perubahan jadwal IKN yang terus-menerus justru bisa membunuh proyek tersebut sebelum selesai?',
-            'Bandingkan dampak ekonomi: Membangun 1 pelabuhan (Infrastruktur) vs Memberi makan 1 juta orang selama setahun. Mana yang lebih sustainable untuk negara berkembang?',
-            'Jelaskan paradoks di mana "Penyatuan Aset BUMN" (Danantara) justru bisa mempermudah korupsi skala besar jika tanpa pengawasan ketat.',
-            'Apakah menangkap preman akan menghilangkan premanisme jika tidak ada lapangan kerja pengganti? Jelaskan menggunakan logika supply-demand tenaga kerja.',
+        // 3. SOAL ESSAY (10 Soal) - SEMI EXPERT DENGAN KONTEKS JELAS
+        $essays = [
+            ['type'=>'essay','question_text'=>'Pemerintah memotong anggaran pendidikan Rp8 T dengan alasan efisiensi, namun UUD 1945 mewajibkan minimal 20% APBN untuk pendidikan. Analisis trade-off antara efisiensi anggaran dan hak konstitusional ini. Mana yang seharusnya diprioritaskan dan mengapa?','options'=>null,'correct_answer'=>'Hak konstitusional prioritas. Efisiensi bisa dicari di sektor lain, bukan memotong hak dasar pendidikan.','explanation'=>'Dinilai: pemahaman konstitusi, argumen prioritas, alternatif solusi efisiensi.'],
+            
+            ['type'=>'essay','question_text'=>'Proyek IKN dimulai era Jokowi dengan investasi triliunan, kini ditunda tanpa batas waktu. Dari perspektif policy continuity (kesinambungan kebijakan), bagaimana seharusnya pemerintahan baru menyikapi proyek ini? Berikan 3 opsi beserta konsekuensinya.','options'=>null,'correct_answer'=>'1) Lanjut dengan revisi skala, 2) Tunda dengan exit strategy jelas, 3) Batalkan dengan kompensasi investor.','explanation'=>'Dinilai: opsi realistis, pertimbangan sunk cost, implikasi politik-ekonomi masing-masing opsi.'],
+            
+            ['type'=>'essay','question_text'=>'Program MBG rawan salah sasaran - keluarga mampu bisa ikut menikmati, sementara keluarga miskin terpencil justru tidak terjangkau. Desain mekanisme targeting yang efektif untuk menghindari inclusion error (yang tidak berhak dapat) dan exclusion error (yang berhak tidak dapat).','options'=>null,'correct_answer'=>'Verifikasi DTKS + cek lapangan + mekanisme pengaduan + update data berkala + jangkauan daerah terpencil.','explanation'=>'Dinilai: pemahaman targeting program sosial, mekanisme verifikasi, feedback loop untuk perbaikan.'],
+            
+            ['type'=>'essay','question_text'=>'Premanisme sulit diberantas karena banyak preman memiliki "backing" dari oknum aparat. Bagaimana strategi memutus rantai kolusi aparat-preman ini secara sistematis? Berikan minimal 4 langkah konkret.','options'=>null,'correct_answer'=>'Rotasi aparat berkala, whistleblower protection, sanksi tegas untuk backing, pengawasan independen, reward pelapor.','explanation'=>'Dinilai: pemahaman akar masalah sistemik, solusi struktural, mekanisme enforcement yang realistis.'],
+            
+            ['type'=>'essay','question_text'=>'Danantara mengelola aset negara triliunan rupiah dengan beberapa pejabat yang rangkap jabatan. Rancang mekanisme checks and balances untuk memastikan tidak terjadi penyalahgunaan aset negara. Sebutkan minimal 4 mekanisme.','options'=>null,'correct_answer'=>'Dewan pengawas independen, audit BPK rutin, disclosure publik wajib, larangan rangkap jabatan, fit and proper test ketat.','explanation'=>'Dinilai: prinsip good governance, multi-layer oversight, transparansi dan akuntabilitas.'],
+            
+            ['type'=>'essay','question_text'=>'Temasek (Singapura) dikenal sebagai SWF yang sukses dan transparan. Bandingkan dengan rencana Danantara Indonesia. Apa yang bisa diadopsi Indonesia dari model Temasek? Apa yang perlu disesuaikan dengan konteks Indonesia?','options'=>null,'correct_answer'=>'Adopsi: independensi, profesionalisme, transparansi, Santiago Principles. Sesuaikan: ukuran ekonomi, kapasitas SDM, konteks politik.','explanation'=>'Dinilai: kemampuan komparasi, identifikasi lesson learned, pemahaman konteks lokal Indonesia.'],
+            
+            ['type'=>'essay','question_text'=>'Anda adalah Menteri Keuangan yang harus memilih: anggaran terbatas, apakah prioritas MBG (Rp71 T) atau infrastruktur daerah tertinggal? Bagaimana strategi menyeimbangkan keduanya? Berikan argumentasi berbasis evidence.','options'=>null,'correct_answer'=>'Prioritas MBG di daerah stunting tinggi, infrastruktur via PPP dan DAK, efisiensi birokrasi untuk tambahan fiskal.','explanation'=>'Dinilai: kemampuan prioritas berbasis data, inovasi pembiayaan alternatif, argumentasi cost-benefit.'],
+            
+            ['type'=>'essay','question_text'=>'Pemotongan anggaran pendidikan Rp8 T akan berdampak berantai (cascading effect) dalam 10-20 tahun. Analisis rantai dampak dari pemotongan ini terhadap ekonomi Indonesia. Mulai dari dampak langsung hingga dampak jangka panjang.','options'=>null,'correct_answer'=>'Kualitas pendidikan turun → SDM kurang kompeten → produktivitas rendah → daya saing lemah → pertumbuhan lambat → kemiskinan naik.','explanation'=>'Dinilai: pemahaman hubungan kausal, perspektif jangka panjang, aplikasi teori human capital.'],
+            
+            ['type'=>'essay','question_text'=>'Sebagai warga negara biasa, mekanisme partisipasi publik apa yang efektif untuk mengawasi kelima kebijakan ini (pemotongan pendidikan, IKN, MBG, Satgas Preman, Danantara)? Berikan minimal 4 cara konkret yang bisa dilakukan masyarakat.','options'=>null,'correct_answer'=>'Akses info via PPID, lapor ke Ombudsman/KPK, aktif di LSM pemantau, diskusi konstruktif di medsos, ikut musrenbang.','explanation'=>'Dinilai: pemahaman mekanisme demokrasi partisipatif, civic engagement, efektivitas tiap channel.'],
+            
+            ['type'=>'essay','question_text'=>'Dari kelima kebijakan (pemotongan anggaran pendidikan, penundaan IKN, MBG, Satgas Premanisme, Danantara), mana yang paling membutuhkan perbaikan urgent dan mengapa? Berikan rekomendasi perbaikan yang konkret dan terukur.','options'=>null,'correct_answer'=>'Urgent: Danantara (governance lemah + aset besar = risiko tinggi). Rekomendasi: dewan independen, Santiago Principles, larangan rangkap jabatan, audit publik.','explanation'=>'Dinilai: kemampuan analisis risiko komparatif, identifikasi urgensi, rekomendasi konkret dan terukur.'],
         ];
 
-        // Generate 10 Soal Essay (Mengulang 5 topik dengan variasi)
-        foreach ($essay_prompts as $idx => $prompt) {
-            $essays[] = [
-                'type' => 'essay',
-                'question_text' => "Logika Kritis " . ($idx + 1) . ": " . $prompt,
-                'options' => null,
-                'correct_answer' => null,
-                'explanation' => 'Jawaban dinilai berdasarkan keruntutan logika dan common sense.',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
+        foreach ($essays as &$essay) {
+            $essay['created_at'] = now();
+            $essay['updated_at'] = now();
         }
-        // Tambah 5 lagi biar 10
-        foreach ($essay_prompts as $idx => $prompt) {
-            $essays[] = [
-                'type' => 'essay',
-                'question_text' => "Logika Kritis " . ($idx + 6) . ": " . $prompt,
-                'options' => null,
-                'correct_answer' => null,
-                'explanation' => 'Jawaban dinilai berdasarkan keruntutan logika dan common sense.',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
-        }
-        
         DB::table('questions')->insert($essays);
     }
 }

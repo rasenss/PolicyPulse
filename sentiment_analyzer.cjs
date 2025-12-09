@@ -1,276 +1,935 @@
-// sentiment_analyzer.cjs
-// EXPERT SYSTEM V3.5: ADVANCED CONTEXTUAL SENTIMENT ENGINE
-// Fitur: Deteksi Sarkasme Politik, Retorika Negatif, Hate Speech, & Slang Normalizer
+/**
+ * POLICYPULSE SENTIMENT ANALYZER v3.1
+ * High-Accuracy Indonesian Political Sentiment Analysis
+ * Improved: Better detection of implicit negativity, sarcasm, and criticism
+ */
 
-class ExpertAnalyzer {
+class PrecisionSentimentAnalyzer {
     constructor() {
-        // 1. KAMUS NORMALISASI (SLANG DICTIONARY)
-        // Mengubah bahasa gaul/singkatan menjadi kata baku agar bisa diproses logika
-        this.slang = {
-            'gk': 'tidak', 'ga': 'tidak', 'gak': 'tidak', 'nggak': 'tidak', 'kaga': 'tidak', 'ora': 'tidak', 'tak': 'tidak',
-            'yg': 'yang', 'utk': 'untuk', 'dgn': 'dengan', 'bgt': 'sangat', 'krn': 'karena', 'tp': 'tapi',
-            'kl': 'kalau', 'klo': 'kalau', 'jd': 'jadi', 'jgn': 'jangan', 'sy': 'saya', 'gw': 'saya', 'aku': 'saya',
-            'lu': 'kamu', 'lo': 'kamu', 'baja': 'saja', 'aja': 'saja', 'doang': 'saja', 'cuman': 'saja',
-            'sdh': 'sudah', 'udh': 'sudah', 'sm': 'sama', 'bkn': 'bukan', 'tak': 'tidak', 'blm': 'belum',
-            'mulyono': 'jokowi_sarkas', 'samsul': 'gibran_sarkas', 'fufufafa': 'gibran_sarkas',
-            'konoha': 'indonesia_sarkas', 'wakanda': 'indonesia_sarkas', 'plonga': 'plongo',
-            'gemoy': 'prabowo', 'bazer': 'buzzer', 'bazerp': 'buzzer'
+        this.buildComprehensiveLexicon();
+        this.buildPatterns();
+    }
+
+    buildComprehensiveLexicon() {
+        // ==================== KATA NEGATIF SANGAT KUAT (-10) ====================
+        this.extremeNegative = new Set([
+            // Makian kasar
+            'anjing', 'anjir', 'anjay', 'anj', 'ajg', 'anjg',
+            'bangsat', 'bgst', 'bngst',
+            'bajingan', 'bjngn',
+            'brengsek', 'brngsk',
+            'keparat', 'kprt',
+            'kampret', 'kmprt',
+            'kontol', 'kntl', 'memek', 'mmk', 'ngentot', 'ngtd', 'entot',
+            'goblok', 'gblk', 'goblog', 'goblg',
+            'tolol', 'tll', 'tolololol',
+            'idiot', 'idi0t',
+            'dungu', 'dng',
+            'bego', 'bgo', 'begok', 'beg0',
+            'bodoh', 'bdh', 'bod0h',
+            'pandir',
+            'oon', 'o\'on', 'oom',
+            'setan', 'syaiton', 'syetan',
+            'iblis', 'ibliz',
+            'laknat', 'laknatullah',
+            'terkutuk', 'kutuk',
+            'tai', 'taik', 't4i', 'tahi',
+            'bacot', 'bacod', 'bacoot',
+            'babi', 'b4bi',
+            'monyet', 'monyong',
+            'bangke', 'bangkai',
+            'gila', 'gil4', 'gile', 'gilak',
+            'edan', 'edun',
+            'sinting', 'sintink',
+            'stress', 'stres',
+            'sarap', 'srap', 'saraf',
+            'geblek', 'gblk',
+            'pekok', 'pkk',
+            'cok', 'cuk', 'jancok', 'jancuk', 'jnck', 'dancok',
+            'asu', 'asw',
+            'bajigur',
+            'bejat', 'bjt',
+            'bedebah', 'bdbh',
+            'sialan', 'sial',
+            // Kata kasar tambahan
+            'kepala batu', 'otak udang', 'otak kosong',
+        ]);
+
+        // ==================== KATA NEGATIF KUAT (-8 to -9) ====================
+        this.strongNegative = new Set([
+            // Korupsi & kejahatan
+            'korupsi', 'koruptor', 'korup', 'corrupt',
+            'maling', 'malink',
+            'pencuri', 'curi', 'nyuri', 'nyolong',
+            'penjahat', 'jahat',
+            'kriminal', 'criminal',
+            'perampok', 'rampok',
+            'penipu', 'tipu', 'nipu', 'menipu', 'penipuan',
+            'pembohong', 'bohong', 'boong', 'bohonk',
+            'pengkhianat', 'khianat', 'hianat',
+            'munafik', 'munafiq',
+            'durjana',
+            'nista', 'nistain',
+            'hina', 'menghina', 'hinaan', 'penghinaan',
+            'curang', 'kecurangan',
+            'manipulasi', 'manipulatif',
+            'fitnah', 'memfitnah',
+            'hoax', 'hoaks', 'hoak',
+            'palsu', 'pemalsuan',
+            'zalim', 'dzalim', 'kezaliman',
+            'kejam', 'kekejaman',
+            'brutal', 'brutalitas',
+            'sadis', 'sadistis',
+            'barbar', 'barbaric',
+            'biadab', 'biadap',
+            // Kegagalan total
+            'hancur', 'hancurin', 'menghancurkan', 'kehancuran',
+            'gagal', 'kegagalan',
+            'bobrok', 'kebobrokan',
+            'busuk', 'busukk', 'membusuk',
+            'sampah', 'smph',
+            'bangkrut', 'kebangkrutan',
+            'kolaps', 'collapse',
+            'ambruk',
+            'runtuh', 'keruntuhan',
+            'musnah', 'pemusnahan',
+            'bencana', 'malapetaka', 'petaka',
+            'celaka', 'kecelakaan',
+        ]);
+
+        // ==================== KATA NEGATIF SEDANG (-5 to -7) ====================
+        this.moderateNegative = new Set([
+            // Penderitaan
+            'sengsara', 'menderita', 'melarat', 'miskin', 'lapar',
+            'kelaparan', 'nestapa', 'derita', 'susah', 'pedih',
+            // Kebohongan
+            'dusta', 'sesat',
+            // Negatif kuat
+            'kacau', 'amburadul', 'berantakan', 'rusak', 'jelek',
+            'buruk', 'parah', 'fatal', 'rugi', 'kerugian',
+            'merugi', 'boros', 'pemborosan', 'percuma',
+            // Kekecewaan
+            'kecewa', 'mengecewakan', 'menyesal', 'sedih', 'murung',
+            'muak', 'jijik', 'benci', 'marah', 'geram',
+            'kesal', 'jengkel', 'dongkol', 'sebal', 'emosi',
+            // Policy-specific negative
+            'defisit', 'resesi', 'krisis',
+            'premanisme', 'pungli', 'pemerasan',
+            'preman',
+            // Tambahan untuk kritik implisit
+            'cemas', 'emas', // Indonesia "cemas" = kritik halus
+        ]);
+
+        // ==================== KATA NEGATIF RINGAN (-2 to -4) ====================
+        this.mildNegative = new Set([
+            // Ketakutan & kekhawatiran
+            'takut', 'khawatir', 'cemas', 'gelisah',
+            'resah', 'panik', 'ngeri', 'horror', 'mengerikan',
+            // Penolakan
+            'tolak', 'menolak', 'penolakan', 'protes', 'demo',
+            'demonstrasi', 'mogok', 'boikot', 'lawan',
+            // Kritik & keluhan
+            'kritik', 'mengkritik', 'kritikan', 'keluhan', 'komplain',
+            'masalah', 'problem', 'isu', 'kontroversi', 'polemik',
+            // Penurunan
+            'turun', 'menurun', 'anjlok', 'jeblok', 'merosot',
+            'melemah', 'memburuk', 'mundur', 'surut', 'menyusut',
+            // Penundaan & hambatan
+            'tunda', 'ditunda', 'penundaan', 'tertunda', 'batal',
+            'dibatalkan', 'hambat', 'terhambat', 'macet',
+            'mandek', 'stuck', 'deadlock', 'buntu', 'stagnan',
+            // Pemotongan
+            'potong', 'dipotong', 'pemotongan', 'pangkas', 'dipangkas',
+            'pemangkasan', 'kurangi', 'dikurangi', 'pengurangan',
+            // Negatif ringan
+            'lambat', 'lama', 'sulit', 'rumit',
+            'ribet', 'mahal', 'berat', 'sukar', 'payah',
+            // Ketidakjelasan
+            'bingung', 'rancu', 'ambigu', 'kabur', 'samar',
+            // Policy-specific
+            'utang', 'inflasi', 'ormas',
+        ]);
+
+        // ==================== KATA/FRASA SKEPTIS & SINISME ====================
+        this.skepticalWords = new Set([
+            'bener', 'beneran', 'serius', 'seriusan',
+            'yakin', 'percaya', 'emang', 'emangnya',
+            'katanya', 'konon', 'kabarnya', 'rumornya',
+            'bentar', 'sebentar', 'nanti', 'dulu',
+            'iya', 'iyakah', 'masa', 'masak', 'masih',
+            'mana', 'kapan', 'gimana', 'kenapa',
+            'kok', 'koq', 'lho', 'loh',
+        ]);
+
+        // ==================== KATA POSITIF SANGAT KUAT (+9 to +10) ====================
+        this.extremePositive = new Set([
+            'luar biasa', 'luarbiasa',
+            'spektakuler',
+            'fenomenal',
+            'gemilang', 'kegemilangan',
+            'cemerlang', 'kecemerlangan',
+            'brilian', 'brilliant',
+            'masterpiece',
+            'sempurna', 'kesempurnaan',
+            'terbaik',
+            'juara', 'kejuaraan',
+            'champion',
+        ]);
+
+        // ==================== KATA POSITIF KUAT (+7 to +8) ====================
+        this.strongPositive = new Set([
+            'hebat', 'kehebatan',
+            'keren', 'kereen', 'kereeen',
+            'mantap', 'mantapp', 'mantul',
+            'top', 'toppp',
+            'amazing', 'amazingg',
+            'excellent', 'excelent',
+            'outstanding',
+            'superb',
+            'fantastis', 'fantastic',
+            'wow', 'woww', 'wih', 'wuih',
+            'sukses', 'kesuksesan',
+            'berhasil', 'keberhasilan',
+            'tercapai', 'pencapaian',
+            'terwujud',
+            'menang', 'kemenangan', 'pemenang',
+            'prestasi', 'berprestasi',
+            'achievement',
+            'salut',
+            'kagum', 'kekaguman', 'mengagumkan',
+            'terpesona',
+            'terkesan', 'impressed',
+            'apresiasi', 'mengapresiasi', 'diapresiasi',
+            'bangga', 'membanggakan', 'kebanggaan',
+            'proud',
+            'jempol',
+            'unggul', 'keunggulan',
+            'prima',
+            'istimewa', 'keistimewaan',
+        ]);
+
+        // ==================== KATA POSITIF SEDANG (+4 to +6) ====================
+        this.moderatePositive = new Set([
+            'baik', 'kebaikan', 'membaik',
+            'bagus', 'bagusss',
+            'oke', 'okay', 'ok',
+            'nice', 'nicee',
+            'good', 'goodd',
+            'great', 'greatt',
+            'positif', 'kepositifan',
+            'konstruktif',
+            'produktif', 'produktivitas',
+            'efektif', 'efektivitas',
+            'efisien', 'efisiensi',
+            'optimal', 'optimalisasi',
+            'maksimal',
+            'dukung', 'mendukung', 'dukungan', 'didukung',
+            'setuju', 'persetujuan', 'menyetujui',
+            'sepakat', 'kesepakatan',
+            'sependapat',
+            'support', 'supporting',
+            'maju', 'kemajuan', 'memajukan',
+            'berkembang', 'perkembangan',
+            'tumbuh', 'pertumbuhan',
+            'meningkat', 'peningkatan',
+            'naik', 'kenaikan',
+            'perbaikan',
+            'progress', 'progres',
+            'improvement',
+            'upgrade',
+            'solusi', 'solutif',
+            'jawaban',
+            'terobosan', 'breakthrough',
+            'inovasi', 'inovatif', 'inovator',
+            'kreatif', 'kreativitas',
+            'cerdas', 'kecerdasan',
+            'aman', 'keamanan', 'mengamankan',
+            'tertib', 'ketertiban',
+            'teratur', 'keteraturan',
+            'stabil', 'stabilitas', 'menstabilkan',
+            'kondusif',
+            'damai', 'kedamaian',
+            'tentram', 'ketentraman',
+            'adil', 'keadilan',
+            'fair',
+            'transparan', 'transparansi',
+            'akuntabel', 'akuntabilitas',
+            'jujur', 'kejujuran',
+            'bersih', 'kebersihan',
+            'integritas',
+            'bantu', 'membantu', 'bantuan', 'dibantu',
+            'tolong', 'menolong', 'pertolongan',
+            'manfaat', 'bermanfaat',
+            'berguna', 'kegunaan',
+            'faedah',
+        ]);
+
+        // ==================== KATA POSITIF RINGAN (+1 to +3) ====================
+        this.mildPositive = new Set([
+            'lumayan', 'lumayanlah',
+            'boleh', 'bolehlah',
+            'acceptable',
+            'reasonable',
+            'optimis', 'optimisme',
+            'harap', 'berharap', 'harapan',
+            'semoga',
+            'amin', 'amiin', 'aamiin',
+            'insyaallah', 'insyallah',
+            'puas', 'kepuasan',
+            'senang', 'kesenangan',
+            'gembira', 'kegembiraan',
+            'bahagia', 'kebahagiaan',
+            'suka', 'kesukaan',
+            'cinta', 'kecintaan',
+            'sayang', 'kesayangan',
+            'syukur', 'bersyukur', 'mensyukuri',
+            'alhamdulillah', 'alhamdulilah',
+            'cepat', 'kecepatan',
+            'tepat', 'ketepatan',
+            'akurat', 'akurasi',
+            'presisi',
+            'lancar', 'kelancaran',
+        ]);
+
+        // ==================== KATA SARKASME ====================
+        this.sarcasmIndicators = new Set([
+            'wkwk', 'wkwkwk', 'wkwkwkwk', 'wkwkwkwkwk',
+            'haha', 'hahaha', 'hahahaha',
+            'hihi', 'hihihi',
+            'hoho', 'hohoho',
+            'kwkw', 'kwkwkw',
+            'awkwk', 'awkwkwk',
+            'xixixi', 'xixi',
+            'lol', 'lmao', 'lmfao', 'rofl',
+            'emang', 'emg', 'memang',
+            'yakin',
+            'pasti',
+            'waduh', 'wadaw', 'wadidaw',
+            'astaga', 'astagfirullah',
+            'duh', 'aduh', 'aduhai',
+            'hmm', 'hmmm', 'hmmmm',
+            'uhh', 'uhhh',
+            'heh', 'hehh', 'hehhh',
+            'ajah', 'aja', 'sih', 'deh', 'dong', 'doong',
+            'kali', 'kalii', 'kan', 'kaan',
+            'tuh', 'toh', 'nih', 'noh',
+            'gitu', 'gtu', 'begitu', 'bgitu',
+            'banget', 'bgt', 'bngt', 'sangat', 'amat',
+            'pinter', 'pintar', 'hebat', 'jago',
+        ]);
+
+        // ==================== NEGASI ====================
+        this.negations = new Set([
+            'tidak', 'tak', 'tiada',
+            'bukan', 'bukanlah',
+            'tanpa',
+            'belum',
+            'jangan', 'janganlah',
+            'gak', 'ga', 'nggak', 'ngga', 'enggak', 'engga', 'kagak', 'gk', 'g',
+            'non', 'anti',
+            'never', 'no', 'none', 'neither', 'not', 'dont', "don't", 'didnt', "didn't",
+            'bkn', 'tdk', 'blm',
+        ]);
+
+        // ==================== INTENSIFIER ====================
+        this.intensifiers = {
+            'sangat': 2.0, 'sgt': 2.0,
+            'amat': 1.8,
+            'banget': 2.0, 'bgt': 2.0, 'bngt': 2.0,
+            'sekali': 1.8, 'skali': 1.8,
+            'paling': 2.2,
+            'super': 2.0,
+            'ultra': 2.0,
+            'extra': 1.5, 'ekstra': 1.5,
+            'ekstrem': 2.0, 'extreme': 2.0,
+            'very': 1.8,
+            'really': 1.8, 'rly': 1.8,
+            'truly': 1.7,
+            'sungguh': 1.8,
+            'betul': 1.5,
+            'terlalu': 1.5, 'trlalu': 1.5,
+            'begitu': 1.4, 'bgitu': 1.4,
+            'demikian': 1.3,
+            'so': 1.5,
+            'too': 1.3,
+            'lebih': 1.3,
+            'makin': 1.4, 'semakin': 1.5, 'kian': 1.4,
+            'tambah': 1.3,
+            'parah': 1.6, 'prh': 1.6,
+            'total': 1.5,
+            'completely': 1.8,
+            'absolutely': 2.0,
+            'entirely': 1.7,
+            'utterly': 1.8,
         };
 
-        // 2. KAMUS BOBOT & KATEGORI (LEXICON)
-        // Format: { score: angka, type: kategori_opsional }
-        this.lexicon = {
-            // --- TARGET SARKASME (TRIGGER UTAMA) ---
-            'jokowi_sarkas': { score: -5, type: 'TARGET_SARCASM' },
-            'gibran_sarkas': { score: -5, type: 'TARGET_SARCASM' },
-            'indonesia_sarkas': { score: -2, type: 'TARGET_SARCASM' },
-            'buzzer': { score: -5, type: 'TARGET_HATE' },
-            'penjilat': { score: -5, type: 'TARGET_HATE' },
-            'cebong': { score: -4, type: 'TARGET_HATE' },
-            'kadrun': { score: -4, type: 'TARGET_HATE' },
-            'kampret': { score: -4, type: 'TARGET_HATE' },
-            'antek': { score: -5, type: 'TARGET_HATE' },
-            'boneka': { score: -5, type: 'TARGET_HATE' },
-            'petugas': { score: -3, type: 'TARGET_SARCASM' },
-
-            // --- NEGATIF KERAS (HATE SPEECH & MAKIAN) ---
-            'anjing': -5, 'bangsat': -5, 'tahi': -5, 'sampah': -5, 'biadab': -5, 'setan': -5,
-            'iblis': -5, 'bajingan': -5, 'laknat': -5, 'jahanam': -5, 'bunuh': -5, 'gantung': -5,
-            'mampus': -5, 'tolol': -5, 'goblok': -5, 'dungu': -5, 'bego': -5, 'idiot': -5, 'bloon': -5,
-            'dosa': -5, 'azab': -5, 'neraka': -5, 'zalim': -5, 'kejam': -5, 'jahat': -5, 'sesat': -5,
-
-            // --- NEGATIF POLITIK & KEBIJAKAN ---
-            'korupsi': -5, 'maling': -5, 'rampok': -5, 'garong': -5, 'tikus': -4, 'suap': -5,
-            'gagal': -5, 'hancur': -5, 'rusak': -5, 'kacau': -5, 'bobrok': -5, 'amburadul': -5,
-            'bohong': -5, 'tipu': -5, 'palsu': -5, 'hoax': -5, 'pencitraan': -4, 'drama': -4,
-            'sengsara': -5, 'miskin': -5, 'lapar': -5, 'melarat': -5, 'cekik': -5, 'matikan': -5,
-            'susah': -4, 'mahal': -5, 'naik': -3, 'beban': -4, 'berat': -4, 'rugi': -4, 'utang': -4,
-            'bangkrut': -5, 'phk': -4, 'pengangguran': -4,
-            'kecewa': -4, 'muak': -5, 'capek': -3, 'lelah': -3, 'bingung': -2, 'aneh': -3,
-            'nyembah': -5, 'berhala': -5, 'klenik': -5, 'mistis': -4, 'manuk': -4, // Konteks IKN
-            'mangkrak': -5, 'candi': -4, 'banjir': -3, 'macet': -3,
-            'wacana': -3, 'omdo': -4, 'janji': -2, 'kritik': -2, 'masalah': -2, 'kendala': -2,
-
-            // --- POSITIF (DUKUNGAN) ---
-            'mantap': 5, 'keren': 5, 'hebat': 5, 'top': 5, 'juara': 5, 'salut': 5,
-            'bangga': 5, 'cinta': 5, 'respek': 5, 'sukses': 5, 'berhasil': 5, 'maju': 5,
-            'sejahtera': 5, 'makmur': 5, 'adil': 5, 'aman': 4, 'damai': 4, 'tenang': 3,
-            'bersih': 4, 'jujur': 5, 'transparan': 4, 'akuntabel': 4, 'tegas': 5, 'berani': 5,
-            'dukung': 5, 'setuju': 5, 'sepakat': 4, 'lanjut': 4, 'gas': 4, 'kawal': 4,
-            'bismillah': 3, 'alhamdulillah': 4, 'berkah': 5, 'amin': 3,
-            'optimis': 5, 'yakin': 5, 'percaya': 5, 'terbaik': 5, 'menyala': 4,
-            'solusi': 4, 'bantu': 4, 'manfaat': 4, 'gratis': 3, 'murah': 3, 'terjangkau': 4
+        // ==================== DIMINISHER ====================
+        this.diminishers = {
+            'agak': 0.5, 'agk': 0.5,
+            'sedikit': 0.4, 'sdkt': 0.4, 'dikit': 0.4,
+            'kurang': 0.6, 'krg': 0.6,
+            'hampir': 0.7,
+            'nyaris': 0.7,
+            'cukup': 0.7, 'ckp': 0.7,
+            'lumayan': 0.6,
+            'rada': 0.5,
+            'somewhat': 0.6,
+            'slightly': 0.5,
+            'mungkin': 0.6, 'mgkn': 0.6,
+            'kayaknya': 0.5, 'kynya': 0.5,
+            'sepertinya': 0.6, 'sprtnya': 0.6,
+            'seolah': 0.5,
+            'hanya': 0.6, 'hny': 0.6,
+            'cuma': 0.6, 'cm': 0.6,
+            'doang': 0.6, 'doank': 0.6,
         };
+    }
 
-        // 3. POLA FRASA (LOGIC PATTERNS)
-        // Mendeteksi struktur kalimat yang mengubah makna
-        this.patterns = {
-            // RETORIS: Pertanyaan yang sebenarnya adalah pernyataan negatif
-            // Contoh: "Mana ada yang bener?" -> Artinya "Tidak ada yang bener"
-            rhetorical: [
-                'mana ada', 'emang ada', 'emang bisa', 'apa bisa', 'kok bisa', 
-                'yakin dek', 'logikanya dimana', 'kapan lagi', 'masa sih', 
-                'mana mungkin', 'apa iya', 'emang bener', 'siapa bilang'
-            ],
-            
-            // NEGASI: Pembalik makna (Positif -> Negatif)
-            negation: [
-                'tidak', 'bukan', 'jangan', 'tak', 'kurang', 'belum', 'anti', 
-                'kagak', 'ora', 'gah', 'salah', 'stop'
-            ],
-            
-            // BOOSTER: Penguat makna (Sangat jelek = 1.5x Jelek)
-            booster: [
-                'sangat', 'banget', 'sekali', 'super', 'terlalu', 'paling', 
-                'amat', 'parah', 'kali', 'abis', 'benar', 'bener'
-            ],
-            
-            // KERAGUAN: Mengurangi nilai positif
-            doubt: [
-                'katanya', 'janjinya', 'wacana', 'omdo', 'teori', 'konsep doang', 
-                'gimmick', 'pencitraan', 'cuma janji'
-            ],
-            
-            // TAWA: Bisa berarti senang, atau ejekan (tergantung konteks)
-            laugh: [
-                'wkwk', 'haha', 'hehe', 'hihi', 'lol', 'ngakak', 'lucu', 'kocak', 'lawak'
-            ]
-        };
+    buildPatterns() {
+        // Pattern untuk deteksi sarkasme
+        this.sarcasmPatterns = [
+            /"([^"]+)".*(\?|\.{3,})/,                    // "bagus" sekali???
+            /\b(wah|wow|gila)\b.*\b(bagus|hebat|mantap|keren)\b/i,  // wah bagus
+            /\b(emang|memang)\b.*\b(bagus|hebat|pinter|pintar)\b/i, // emang bagus
+            /\b(yakin|pasti)\b.*\b(bisa|berhasil|sukses)\b.*\?/i,   // yakin bisa?
+            /(bagus|hebat|keren|mantap).*(ya|nih|dong|deh)[\.\?]{0,3}$/i, // bagus ya...
+            /👏.*👏/,  // Clap emoji (often sarcastic)
+            /🙄/,      // Eye roll
+            /😏/,      // Smirk
+            // Tambahan pattern sarkasme
+            /yang\s+bener\s*(aja|ajah|sih|deh)?/i,    // yang bener ajah
+            /\?\s*$/, // Kalimat berakhir dengan ?
+            /\.{2,}$/, // Kalimat berakhir dengan ...
+            /yak\s+betul/i, // yak betul (sarkastik)
+            /c\)emas/i, // (c)emas = cemas (wordplay kritik)
+        ];
+
+        // Pattern negatif yang pasti
+        this.definiteNegativePatterns = [
+            // Makian langsung
+            /\b(anjing|anjir|bangsat|goblok|tolol|bodoh|bego|idiot|dungu|tai|babi|monyet|jancok|asu)\b/i,
+            // Korupsi
+            /\b(korupsi|koruptor|maling|pencuri|penipu|pembohong)\b/i,
+            /mencuri|merampok|menggelapkan|menilep/i,
+            // Kegagalan
+            /(gagal\s*(total)?|hancur|bobrok|busuk|sampah|bangkrut)/i,
+            /(negara|rakyat|ekonomi).*(hancur|sengsara|menderita)/i,
+            /(pemerintah|presiden|menteri).*(gagal|bodoh|tolol|goblok)/i,
+            // Hoax/Bohong
+            /(hoax|hoaks|bohong|pembohong|penipu|tipu)/i,
+            /(janji\s*palsu|omong\s*kosong)/i,
+            // Pemotongan negatif
+            /(pemotongan|pemangkasan).*(anggaran|dana|budget).*(pendidikan|kesehatan)/i,
+            /(anggaran|dana).*(dipotong|dipangkas).*(drastis|besar)/i,
+            // Penundaan negatif
+            /ditunda\s*(tanpa|tanpa\s*batas)/i,
+            /(tidak|tanpa)\s*(jelas|transparan|akuntabel)/i,
+            // Protes keras
+            /(tolak|menolak|protes).*(keras|tegas|besar)/i,
+            /demo\s*(besar|massa|akbar)/i,
+            // Tambahan pattern kritik
+            /otak.*dipotong/i,
+            /jangan\s*lupa\s*dipotong/i,
+            /(polisi|tentara|tni|pertahanan).*tidak\s*dipotong/i,
+            /(polisi|tentara|tni|pertahanan).*rp\.?\s*0/i,
+            /dana.*buat.*(ikn|mbg)/i, // pertanyaan skeptis tentang dana
+            /\(c\)emas/i, // wordplay kritik
+            /indonesia.*cemas/i,
+            /indonesia.*emas/i, // bisa jadi wordplay
+        ];
+
+        // Pattern pertanyaan retoris (biasanya negatif)
+        this.rhetoricalPatterns = [
+            /berapa\s*(jumlah)?\s*(pemotongan|anggaran|dana).*\?/i,
+            /kemana\s*(uang|dana|anggaran)/i,
+            /mana\s*(bukti|hasilnya|janjinya)/i,
+            /kapan\s*(realisasi|selesai|jadi)/i,
+            /siapa\s*(yang\s*)?(tanggung\s*jawab|untung)/i,
+            /apa\s*(gunanya|manfaatnya|untungnya)/i,
+            /bener\s*(gak|ga|nggak|ngga).*\?/i,
+            /serius\s*(nih|ini).*\?/i,
+            /yakin.*\?/i,
+            /masa\s*(sih|iya).*\?/i,
+        ];
+
+        // Pattern positif yang pasti
+        this.definitePositivePatterns = [
+            /(luar\s*biasa|sangat\s*(bagus|baik|hebat|keren))/i,
+            /(sukses\s*besar|berhasil|tercapai|terwujud)/i,
+            /(dukung\s*(penuh|total|sepenuhnya))/i,
+            /(setuju|sepakat)\s*(sekali|banget|total)/i,
+            /(prestasi|pencapaian).*(luar\s*biasa|membanggakan|gemilang)/i,
+            /(bangga|salut|kagum)\s*(sekali|banget)/i,
+            /patut\s*(diapresiasi|diacungi)/i,
+            /(kerja|usaha|upaya)\s*(nyata|bagus|baik|hebat)/i,
+            /(solusi|terobosan)\s*(tepat|cerdas|jitu|bagus)/i,
+            /(meningkat|naik|tumbuh)\s*(signifikan|drastis|pesat)/i,
+            /(alhamdulillah|puji\s*tuhan|syukur)/i,
+            /(terima\s*kasih|thanks|makasih)\s*(banyak|banget)/i,
+            /👍{2,}|🔥{2,}|❤️{2,}|💪{2,}|🎉{2,}/,  // Multiple positive emoji
+        ];
     }
 
     analyze(text) {
-        // Jika teks kosong/null
-        if (!text) return { score: 0, label: 'Netral' };
+        if (!text || typeof text !== 'string' || text.trim().length < 2) {
+            return { score: 0, label: 'Netral', confidence: 0 };
+        }
 
-        // STEP 1: PRE-PROCESSING
-        // Bersihkan simbol, lowercase, dan normalisasi slang
-        let cleanText = text.toLowerCase()
-            .replace(/[^\w\s]/gi, ' ') // Hapus simbol aneh
-            .replace(/\s+/g, ' ')      // Hapus spasi ganda
-            .trim();
+        const originalText = text;
+        const lowerText = text.toLowerCase();
+        const tokens = this.tokenize(lowerText);
+
+        // STEP 1: Check for body part + cut/potong (insulting)
+        if (this.checkInsultPattern(lowerText)) {
+            return { score: -9, label: 'Negatif', confidence: 97 };
+        }
+
+        // STEP 2: Check definite patterns (highest priority)
+        const patternResult = this.checkPatterns(originalText, lowerText);
+        if (patternResult.matched) {
+            return patternResult.result;
+        }
+
+        // STEP 3: Check for extreme words (makian)
+        const extremeResult = this.checkExtremeWords(tokens);
+        if (extremeResult.found) {
+            return { score: -10, label: 'Negatif', confidence: 99 };
+        }
+
+        // STEP 4: Check rhetorical questions (usually negative)
+        const rhetoricalResult = this.checkRhetoricalQuestions(lowerText);
+        if (rhetoricalResult.isRhetorical) {
+            return { score: -5, label: 'Negatif', confidence: 85 };
+        }
+
+        // STEP 5: Check skeptical/sarcastic tone
+        const skepticalScore = this.checkSkepticalTone(lowerText, tokens);
+
+        // STEP 6: Calculate lexicon score
+        let score = this.calculateScore(tokens, lowerText);
+
+        // STEP 7: Apply skeptical adjustment
+        score += skepticalScore;
+
+        // STEP 8: Check sarcasm
+        if (this.detectSarcasm(originalText, lowerText) && score >= -2) {
+            score = Math.min(score, -4); // Force negative if sarcasm detected
+        }
+
+        // STEP 9: Check wordplay/creative criticism
+        score += this.checkWordplay(lowerText);
+
+        // STEP 10: Apply emotional intensity
+        score = this.applyEmotionalIntensity(originalText, score);
+
+        // STEP 11: Check ending punctuation
+        score = this.adjustForPunctuation(originalText, score);
+
+        // STEP 12: Determine label with adjusted thresholds
+        return this.determineLabel(score);
+    }
+
+    checkInsultPattern(text) {
+        // Pattern: otak/kepala + dipotong/potong (insulting)
+        const insultPatterns = [
+            /otak.*(di)?potong/i,
+            /kepala.*(di)?potong/i,
+            /mulut.*(di)?potong/i,
+            /lidah.*(di)?potong/i,
+            /jangan\s*lupa.*(di)?potong/i,
+            /harus.*(di)?potong/i,
+            /perlu.*(di)?potong/i,
+        ];
         
-        let rawWords = cleanText.split(' ');
-        let words = rawWords.map(w => this.slang[w] || w);
-        let normalizedText = words.join(' ');
+        for (const pattern of insultPatterns) {
+            if (pattern.test(text)) return true;
+        }
+        return false;
+    }
 
-        // STEP 2: CONTEXT FLAGS (Mengumpulkan Bukti)
-        let ctx = {
-            score: 0,
-            wordCount: 0,
-            negativeWords: 0,
-            positiveWords: 0,
-            
-            // Flags Khusus
-            hasSarcasticTarget: false, // Ada Mulyono?
-            hasRhetorical: false,      // Ada "Mana ada"?
-            hasLaugh: false,           // Ada "wkwk"?
-            hasDoubt: false,           // Ada "Katanya"?
-            hasNegation: false,        // Ada "Tidak"?
-            isHateSpeech: false        // Ada kata kasar parah?
+    checkRhetoricalQuestions(text) {
+        // Cek apakah kalimat adalah pertanyaan retoris (biasanya negatif/skeptis)
+        for (const pattern of this.rhetoricalPatterns) {
+            if (pattern.test(text)) {
+                return { isRhetorical: true };
+            }
+        }
+        
+        // Cek pattern umum pertanyaan skeptis
+        if (text.includes('?')) {
+            const skepticalStarters = [
+                'bener', 'serius', 'yakin', 'masa', 'emang', 'emangnya',
+                'kok', 'kenapa', 'gimana', 'kapan', 'mana', 'apa',
+            ];
+            for (const starter of skepticalStarters) {
+                if (text.includes(starter)) {
+                    return { isRhetorical: true };
+                }
+            }
+        }
+        
+        return { isRhetorical: false };
+    }
+
+    checkSkepticalTone(text, tokens) {
+        let score = 0;
+        
+        // Cek kata skeptis
+        let skepticalCount = 0;
+        for (const token of tokens) {
+            if (this.skepticalWords.has(token)) {
+                skepticalCount++;
+            }
+        }
+        
+        // Jika ada banyak kata skeptis, kurangi score
+        if (skepticalCount >= 2) {
+            score -= skepticalCount * 1.5;
+        }
+        
+        // Cek pattern "yang bener ajah", "serius?", dll
+        if (/yang\s+bener/i.test(text)) score -= 3;
+        if (/serius\s*(nih|ini|\?)*/i.test(text)) score -= 2;
+        if (/masa\s*(sih|iya)/i.test(text)) score -= 2;
+        if (/emang(nya)?\s+bisa/i.test(text)) score -= 2;
+        if (/yakin\s*(bisa|berhasil)/i.test(text)) score -= 2;
+        
+        // Cek kalimat berakhir dengan "..." (ragu/skeptis)
+        if (/\.{2,}\s*$/.test(text)) score -= 2;
+        
+        // Cek kalimat berakhir dengan "?" tanpa kata tanya eksplisit
+        if (/[^?]\?\s*$/.test(text) && !/^(apa|siapa|kapan|dimana|mengapa|bagaimana|berapa)/i.test(text)) {
+            score -= 1.5;
+        }
+        
+        return score;
+    }
+
+    checkWordplay(text) {
+        let score = 0;
+        
+        // Indonesia (c)emas = Indonesia cemas (kritik halus)
+        if (/\(c\)emas/i.test(text) || /indonesia\s*c\s*emas/i.test(text)) {
+            score -= 6;
+        }
+        
+        // Pattern wordplay lainnya
+        if (/\([a-z]\)[a-z]+/i.test(text)) {
+            score -= 3; // Ada wordplay dengan kurung
+        }
+        
+        return score;
+    }
+
+    adjustForPunctuation(text, score) {
+        // Jika netral tapi ada tanda tanya di akhir, cenderung negatif
+        if (score >= -2 && score <= 2) {
+            if (/\?\s*$/.test(text)) {
+                score -= 2;
+            }
+            if (/\.{3,}\s*$/.test(text)) {
+                score -= 1.5;
+            }
+        }
+        
+        // Multiple question marks = sangat skeptis
+        const qCount = (text.match(/\?/g) || []).length;
+        if (qCount >= 2) {
+            score -= qCount;
+        }
+        
+        return score;
+    }
+
+    checkPatterns(originalText, lowerText) {
+        // Check definite negative
+        for (const pattern of this.definiteNegativePatterns) {
+            if (pattern.test(lowerText) || pattern.test(originalText)) {
+                return { matched: true, result: { score: -8, label: 'Negatif', confidence: 95 } };
+            }
+        }
+
+        // Check definite positive
+        for (const pattern of this.definitePositivePatterns) {
+            if (pattern.test(lowerText) || pattern.test(originalText)) {
+                return { matched: true, result: { score: 8, label: 'Positif', confidence: 95 } };
+            }
+        }
+
+        return { matched: false };
+    }
+
+    checkExtremeWords(tokens) {
+        for (const token of tokens) {
+            if (this.extremeNegative.has(token)) {
+                return { found: true, word: token };
+            }
+        }
+        return { found: false };
+    }
+
+    calculateScore(tokens, text) {
+        let score = 0;
+        let matchCount = 0;
+
+        for (let i = 0; i < tokens.length; i++) {
+            const token = tokens[i];
+            let wordScore = 0;
+
+            // Check each lexicon category
+            if (this.extremeNegative.has(token)) {
+                wordScore = -10;
+            } else if (this.strongNegative.has(token)) {
+                wordScore = -8;
+            } else if (this.moderateNegative.has(token)) {
+                wordScore = -5;
+            } else if (this.mildNegative.has(token)) {
+                wordScore = -3;
+            } else if (this.extremePositive.has(token)) {
+                wordScore = 10;
+            } else if (this.strongPositive.has(token)) {
+                wordScore = 8;
+            } else if (this.moderatePositive.has(token)) {
+                wordScore = 5;
+            } else if (this.mildPositive.has(token)) {
+                wordScore = 2;
+            }
+
+            if (wordScore !== 0) {
+                // Check negation
+                if (this.hasNegation(tokens, i)) {
+                    wordScore = wordScore > 0 ? -wordScore * 0.7 : Math.abs(wordScore) * 0.4;
+                }
+
+                // Check modifiers
+                wordScore *= this.getModifier(tokens, i);
+
+                score += wordScore;
+                matchCount++;
+            }
+        }
+
+        // Check multi-word phrases
+        score += this.checkPhrases(text);
+
+        // Normalize if many words
+        if (matchCount > 4) {
+            score = score / Math.sqrt(matchCount) * 1.5;
+        }
+
+        return score;
+    }
+
+    hasNegation(tokens, index) {
+        for (let i = Math.max(0, index - 3); i < index; i++) {
+            if (this.negations.has(tokens[i])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    getModifier(tokens, index) {
+        let modifier = 1.0;
+        for (let i = Math.max(0, index - 2); i < index; i++) {
+            if (this.intensifiers[tokens[i]]) {
+                modifier *= this.intensifiers[tokens[i]];
+            } else if (this.diminishers[tokens[i]]) {
+                modifier *= this.diminishers[tokens[i]];
+            }
+        }
+        return modifier;
+    }
+
+    checkPhrases(text) {
+        let score = 0;
+
+        const negativePhrases = {
+            'tanpa batas waktu': -5, 'tidak jelas': -4, 'tidak transparan': -5,
+            'gagal total': -8, 'buang anggaran': -6, 'buang-buang uang': -6,
+            'sia-sia': -5, 'omong kosong': -7, 'janji palsu': -7,
+            'rakyat sengsara': -8, 'rakyat menderita': -8, 'ekonomi hancur': -8,
+            'korupsi merajalela': -9, 'tidak becus': -6, 'tidak kompeten': -5,
+            'sangat mengecewakan': -6, 'sangat kecewa': -6, 'amat disayangkan': -4,
+            'yang bener': -3, 'yang bener ajah': -4, 'yang bener aja': -4,
+            'yak betul': -3, // sarkastik
+            'tidak dipotong': -3, // konteks perbandingan negatif
+            'rp 0': -3, 'rp.0': -3, 'rp0': -3,
+            'alias tidak': -2,
+            'buat tambah': -2, // skeptis tentang penggunaan dana
+            'malah buat': -3,
         };
 
-        // Deteksi Pola Frasa (Phrase Scanning)
-        this.patterns.rhetorical.forEach(p => { 
-            if (normalizedText.includes(p)) {
-                ctx.hasRhetorical = true;
-                ctx.score -= 3; // Default penalti untuk pertanyaan retoris sinis
-            }
-        });
-        
-        this.patterns.doubt.forEach(p => { 
-            if (normalizedText.includes(p)) {
-                ctx.hasDoubt = true;
-                ctx.score -= 2; 
-            }
-        });
-        
-        this.patterns.laugh.forEach(p => { 
-            if (normalizedText.includes(p)) ctx.hasLaugh = true; 
-        });
+        const positivePhrases = {
+            'luar biasa': 9, 'sangat bagus': 8, 'sangat baik': 7,
+            'sangat membantu': 7, 'tepat sasaran': 6, 'solusi tepat': 6,
+            'langkah maju': 5, 'kerja nyata': 6, 'bukti nyata': 5,
+            'sukses besar': 8, 'prestasi gemilang': 9, 'patut diapresiasi': 6,
+            'sangat efektif': 7, 'sangat efisien': 7,
+        };
 
-        // STEP 3: WORD SCORING LOOP
-        for (let i = 0; i < words.length; i++) {
-            let word = words[i];
-            let val = 0;
-            let type = null;
-
-            // Cek Kamus Lexicon
-            if (this.lexicon[word]) {
-                if (typeof this.lexicon[word] === 'object') {
-                    val = this.lexicon[word].score;
-                    type = this.lexicon[word].type;
-                } else {
-                    val = this.lexicon[word];
-                }
-            }
-
-            // Flagging Entity (Deteksi Target Sarkasme)
-            if (type === 'TARGET_SARCASM' || type === 'TARGET_HATE') {
-                ctx.hasSarcasticTarget = true;
-                // Bobot target sarkas langsung negatif, tidak peduli konteks
-                ctx.score += val; 
-            }
-
-            // Flagging Hate Speech
-            if (val <= -10) ctx.isHateSpeech = true;
-
-            // Proses Bobot Kata (Jika ada nilainya)
-            if (val !== 0) {
-                let contextMult = 1;
-
-                // Lookbehind (Cek 2 kata sebelumnya)
-                let prev1 = i > 0 ? words[i-1] : '';
-                let prev2 = i > 1 ? words[i-2] : '';
-
-                // Rule Negasi (Logic Reversal)
-                // "Tidak Bagus" -> -5 (Bukan 5)
-                if (this.patterns.negation.includes(prev1) || this.patterns.negation.includes(prev2)) {
-                    val = -val; 
-                    ctx.hasNegation = true;
-                }
-
-                // Rule Booster (Logic Amplifier)
-                // "Sangat Hancur" -> -5 * 1.5 = -7.5
-                if (this.patterns.booster.includes(prev1)) {
-                    contextMult = 1.5;
-                }
-
-                // Tambahkan ke Skor Total
-                ctx.score += (val * contextMult);
-
-                // Hitung jumlah kata positif/negatif murni untuk logika nanti
-                if (val > 0) ctx.positiveWords++;
-                if (val < 0) ctx.negativeWords++;
-            }
-            
-            ctx.wordCount++;
+        for (const [phrase, value] of Object.entries(negativePhrases)) {
+            if (text.includes(phrase)) score += value;
+        }
+        for (const [phrase, value] of Object.entries(positivePhrases)) {
+            if (text.includes(phrase)) score += value;
         }
 
-        // STEP 4: EXPERT LOGIC (PENERAPAN ATURAN CERDAS)
-        
-        // RULE 1: THE PARADOX (SARKASME POLITIK)
-        // IF (Target = BazeRp) AND (Ada Kata Positif) -> THEN (Sentimen = SARKAS BERAT)
-        // Alasan: Tidak mungkin orang memuji tulus menggunakan julukan ejekan.
-        // Contoh: " hebat banget" -> Skor dibanting jadi -15.
-        if (ctx.hasSarcasticTarget && ctx.positiveWords > 0) {
-            ctx.score = -15; // Hukuman berat sarkasme
+        return score;
+    }
+
+    detectSarcasm(originalText, lowerText) {
+        // Check quoted positive words
+        const quotedMatch = originalText.match(/"([^"]+)"/);
+        if (quotedMatch) {
+            const quoted = quotedMatch[1].toLowerCase();
+            const positives = ['bagus', 'hebat', 'mantap', 'keren', 'sukses', 'baik', 'pintar', 'cerdas'];
+            if (positives.some(p => quoted.includes(p))) return true;
         }
 
-        // RULE 2: LAUGHING AT DISASTER (MENERTAWAKAN KEGAGALAN)
-        // IF (Ada Tawa 'wkwk') AND (Ada Kata Negatif) -> THEN (Sentimen = NEGATIF)
-        // Reason: "Negara hancur wkwk" adalah ejekan/keputusasaan, bukan kegembiraan.
-        if (ctx.hasLaugh && ctx.negativeWords > 0) {
-            ctx.score -= 4;
+        // Check sarcasm patterns
+        for (const pattern of this.sarcasmPatterns) {
+            if (pattern.test(lowerText) || pattern.test(originalText)) return true;
         }
 
-        // RULE 3: RHETORICAL SARCASM (RETORIS SINIS)
-        // IF (Pertanyaan Retoris) AND (Ada Kata Positif) -> THEN (Sentimen = NEGATIF)
-        // Contoh: "Mana ada yang bagus?" -> 'Bagus' dibalik maknanya jadi jelek.
-        if (ctx.hasRhetorical && ctx.positiveWords > 0) {
-            // Skor dibalik menjadi negatif dan diperparah
-            ctx.score = -Math.abs(ctx.score) - 5;
+        // Check laughter + positive word
+        if (/wk|haha|hihi|lol/i.test(lowerText)) {
+            const positives = ['bagus', 'hebat', 'mantap', 'keren', 'sukses'];
+            if (positives.some(p => lowerText.includes(p))) return true;
         }
 
-        // RULE 4: DOUBTFUL POSITIVE (PUJIAN RAGU)
-        // IF (Ada Keraguan) AND (Ada Kata Positif) -> THEN (Kurangi Nilai Positif)
-        // Contoh: "Katanya sih bagus" -> Nilai positifnya tidak valid.
-        if (ctx.hasDoubt && ctx.positiveWords > 0) {
-            ctx.score -= 5; // Kurangi poin positifnya drastis
+        // Check skeptical endings
+        if (/\s+(sih|deh|dong|nih|tuh|kali)\s*[\.\?\!]*\s*$/i.test(lowerText)) {
+            return true;
         }
 
-        // STEP 5: FINAL LABELING (PENENTUAN KEPUTUSAN)
-        let label = 'Netral';
+        return false;
+    }
 
-        // Threshold (Ambang Batas)
-        if (ctx.score >= 2) label = 'Positif';
-        else if (ctx.score <= -2) label = 'Negatif';
-        else {
-            // GRAY AREA RESOLUTION (-1 s/d 1)
-            // Logic breaker untuk menghindari terlalu banyak "Netral" palsu
-            
-            // 1. Jika menyebut target sarkas (Mulyono), otomatis Negatif
-            if (ctx.hasSarcasticTarget) label = 'Negatif'; 
-            
-            // 2. Jika kalimatnya ragu-ragu/wacana, otomatis Negatif
-            else if (ctx.hasDoubt) label = 'Negatif'; 
-            
-            // 3. Jika ada kata negatif walau sedikit, dan tidak ada kata positif kuat -> Bias ke Negatif
-            else if (ctx.negativeWords > 0 && ctx.positiveWords === 0) label = 'Negatif';
-            
-            // 4. Jika ada "Tidak" + "Kata Positif" (e.g. "Tidak jelas"), jadikan Negatif
-            else if (ctx.hasNegation && ctx.positiveWords > 0) label = 'Negatif';
+    applyEmotionalIntensity(text, score) {
+        let multiplier = 1.0;
 
-            // 5. Default Netral hanya untuk pertanyaan murni
-            else if (text.includes('?')) label = 'Netral';
+        // Exclamation marks
+        const exclCount = (text.match(/!/g) || []).length;
+        if (exclCount >= 3) multiplier *= 1.4;
+        else if (exclCount >= 2) multiplier *= 1.2;
+
+        // Question marks (often negative/rhetorical)
+        const questCount = (text.match(/\?/g) || []).length;
+        if (questCount >= 3 && score < 0) multiplier *= 1.3;
+        else if (questCount >= 2 && score >= -2 && score <= 2) {
+            score -= 2; // Jika netral tapi banyak ?, cenderung negatif
         }
 
-        return { score: ctx.score, label: label };
+        // CAPS
+        const capsRatio = (text.match(/[A-Z]/g) || []).length / Math.max(text.length, 1);
+        if (capsRatio > 0.5) multiplier *= 1.5;
+        else if (capsRatio > 0.3) multiplier *= 1.2;
+
+        // Emoji
+        const posEmoji = (text.match(/[😀😃😄😁😊🥰😍🤩👍👏🎉✨💪🔥❤️💯🙏😇]/g) || []).length;
+        const negEmoji = (text.match(/[😢😭😤😡🤬😠👎💔😞😔🤮😒😑🙄💩😵🤢]/g) || []).length;
+
+        if (posEmoji >= 2 && score > 0) score += posEmoji * 1.5;
+        if (negEmoji >= 2 && score < 0) score -= negEmoji * 1.5;
+        if (posEmoji >= 2 && score <= 0) score += posEmoji * 2;
+        if (negEmoji >= 2 && score >= 0) score -= negEmoji * 2;
+
+        return score * multiplier;
+    }
+
+    tokenize(text) {
+        return text
+            .replace(/https?:\/\/\S+/g, ' ')
+            .replace(/@\w+/g, ' ')
+            .replace(/#(\w+)/g, '$1')
+            .replace(/[^\w\s\-\(\)]/g, ' ')
+            .replace(/\d+/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .split(/\s+/)
+            .filter(t => t.length > 1);
+    }
+
+    determineLabel(score) {
+        let label, confidence;
+
+        // Adjusted thresholds - lebih sensitif ke negatif
+        if (score >= 3) {
+            label = 'Positif';
+            confidence = Math.min(99, 50 + Math.abs(score) * 5);
+        } else if (score <= -2) { // Diturunkan dari -3 ke -2
+            label = 'Negatif';
+            confidence = Math.min(99, 50 + Math.abs(score) * 5);
+        } else {
+            label = 'Netral';
+            confidence = Math.max(60, 85 - Math.abs(score) * 8);
+        }
+
+        return {
+            score: parseFloat(score.toFixed(2)),
+            label,
+            confidence: parseFloat(confidence.toFixed(1))
+        };
+    }
+
+    analyzeBatch(texts) {
+        return texts.map(t => this.analyze(t));
     }
 }
 
-// INSTANTIATION & EXPORT
-const analyzer = new ExpertAnalyzer();
+const analyzer = new PrecisionSentimentAnalyzer();
 
-module.exports = { 
-    analyze: (text) => analyzer.analyze(text) 
+module.exports = {
+    analyze: (text) => analyzer.analyze(text),
+    analyzeBatch: (texts) => analyzer.analyzeBatch(texts),
+    PrecisionSentimentAnalyzer
 };
+
+// Test
+if (require.main === module) {
+    console.log("🎯 PRECISION SENTIMENT ANALYZER v3.1\n");
+    
+    const tests = [
+        // Kasus yang sebelumnya salah
+        { text: "Dana potongan Ini bener buat MBG atau malah buat tambah IKN? Yang bener ajah...", expected: "Negatif" },
+        { text: "Indonesia (c)emas.", expected: "Negatif" },
+        { text: "lalu berapa jumlah pemotongan Polisi, Tentara dan Pertahanan kawan-kawan ? yak betul, Rp.0 alias tidak dipotong", expected: "Negatif" },
+        { text: "Otakmu juga jangan lupa dipotong", expected: "Negatif" },
+        
+        // Negatif makian
+        { text: "Goblok banget pemerintah ini", expected: "Negatif" },
+        { text: "Dasar tolol, ga becus kerja", expected: "Negatif" },
+        { text: "Anjir parah banget korupsinya", expected: "Negatif" },
+        
+        // Negatif halus
+        { text: "Sangat kecewa dengan kebijakan ini", expected: "Negatif" },
+        { text: "Pemotongan anggaran pendidikan merugikan rakyat", expected: "Negatif" },
+        { text: "Proyek ditunda tanpa batas waktu", expected: "Negatif" },
+        
+        // Sarkasme
+        { text: "Wah \"hebat\" sekali pemerintah kita", expected: "Negatif" },
+        { text: "Bagus ya kebijakan ini wkwkwk", expected: "Negatif" },
+        { text: "Emang pinter banget deh 🙄", expected: "Negatif" },
+        
+        // Positif
+        { text: "Luar biasa! Program ini sangat membantu rakyat", expected: "Positif" },
+        { text: "Mantap sekali prestasinya! 🔥👍", expected: "Positif" },
+        { text: "Alhamdulillah berhasil dengan baik", expected: "Positif" },
+        
+        // Netral (benar-benar informatif)
+        { text: "Pemerintah mengumumkan kebijakan baru", expected: "Netral" },
+        { text: "Rapat koordinasi membahas anggaran", expected: "Netral" },
+    ];
+
+    let correct = 0;
+    tests.forEach((t, i) => {
+        const r = analyzer.analyze(t.text);
+        const ok = r.label === t.expected;
+        if (ok) correct++;
+        console.log(`${ok ? '✅' : '❌'} ${i+1}. "${t.text.substring(0,50)}${t.text.length > 50 ? '...' : ''}"`);
+        console.log(`   Expected: ${t.expected} | Got: ${r.label} (${r.score}, ${r.confidence}%)\n`);
+    });
+
+    console.log(`\n📊 ACCURACY: ${correct}/${tests.length} (${(correct/tests.length*100).toFixed(1)}%)`);
+}

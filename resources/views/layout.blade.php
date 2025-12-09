@@ -51,18 +51,21 @@
 </head>
 <body class="antialiased selection:bg-stone-200 selection:text-black">
 
-    <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 w-[90%] max-w-3xl">
+    <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 w-[90%] max-w-4xl">
         <div class="nav-glass rounded-full px-6 py-3 flex justify-between items-center">
             <a href="{{ route('home') }}" class="flex items-center gap-3 opacity-80 hover:opacity-100 transition">
                 <img src="{{ asset('1.png') }}" alt="Logo" class="h-6 invert-0">
             </a>
             
             <div class="flex items-center gap-1 bg-stone-100 rounded-full p-1">
-                <a href="{{ route('home') }}" class="px-5 py-2 rounded-full text-xs font-bold transition {{ Request::routeIs('home') || Request::routeIs('policy') ? 'bg-white text-black shadow-sm' : 'text-stone-500 hover:text-stone-800' }}">
-                    Policies
+                <a href="{{ route('home') }}" class="px-4 py-2 rounded-full text-xs font-bold transition {{ Request::routeIs('home') || Request::routeIs('policy') ? 'bg-white text-black shadow-sm' : 'text-stone-500 hover:text-stone-800' }}">
+                    Dashboard
                 </a>
-                <a href="{{ route('quiz') }}" class="px-5 py-2 rounded-full text-xs font-bold transition {{ Request::routeIs('quiz') ? 'bg-white text-black shadow-sm' : 'text-stone-500 hover:text-stone-800' }}">
-                    Education Quiz
+                <a href="{{ route('education') }}" class="px-4 py-2 rounded-full text-xs font-bold transition {{ Request::routeIs('education') ? 'bg-white text-black shadow-sm' : 'text-stone-500 hover:text-stone-800' }}">
+                    Education
+                </a>
+                <a href="{{ route('quiz') }}" class="px-4 py-2 rounded-full text-xs font-bold transition {{ Request::routeIs('quiz') || Request::is('exam') ? 'bg-white text-black shadow-sm' : 'text-stone-500 hover:text-stone-800' }}">
+                    Quiz
                 </a>
             </div>
         </div>
