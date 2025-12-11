@@ -1,8 +1,139 @@
 /**
- * POLICYPULSE SENTIMENT ANALYZER v7.0
+ * POLICYPULSE SENTIMENT ANALYZER v8.0
  * Ultra-Wide Coverage Indonesian Political Sentiment Analysis
+ * With Naive Bayes Classifier
  * Maximum Accuracy for Research Publication
  */
+
+// ==================== NAIVE BAYES CLASSIFIER ====================
+class NaiveBayesClassifier {
+    constructor() {
+        this.classes = ['Positif', 'Negatif', 'Netral'];
+        this.vocabulary = new Set();
+        this.wordCounts = { Positif: {}, Negatif: {}, Netral: {} };
+        this.classCounts = { Positif: 0, Negatif: 0, Netral: 0 };
+        this.totalDocuments = 0;
+        this.vocabularySize = 0;
+        this.alpha = 1; // Laplace smoothing parameter
+    }
+
+    // Train dengan satu dokumen
+    train(tokens, label) {
+        if (!this.classes.includes(label)) return;
+        
+        this.classCounts[label]++;
+        this.totalDocuments++;
+
+        for (const token of tokens) {
+            this.vocabulary.add(token);
+            if (!this.wordCounts[label][token]) {
+                this.wordCounts[label][token] = 0;
+            }
+            this.wordCounts[label][token]++;
+        }
+        this.vocabularySize = this.vocabulary.size;
+    }
+
+    // Train dengan batch data
+    trainBatch(data) {
+        for (const { tokens, label } of data) {
+            this.train(tokens, label);
+        }
+    }
+
+    // Hitung prior probability P(class)
+    getPriorProbability(label) {
+        if (this.totalDocuments === 0) return 1 / this.classes.length;
+        return this.classCounts[label] / this.totalDocuments;
+    }
+
+    // Hitung total kata dalam class
+    getTotalWordsInClass(label) {
+        return Object.values(this.wordCounts[label]).reduce((a, b) => a + b, 0);
+    }
+
+    // Hitung likelihood P(word|class) dengan Laplace smoothing
+    getLikelihood(word, label) {
+        const wordCount = this.wordCounts[label][word] || 0;
+        const totalWords = this.getTotalWordsInClass(label);
+        // Laplace smoothing: (count + alpha) / (total + alpha * vocabularySize)
+        return (wordCount + this.alpha) / (totalWords + this.alpha * this.vocabularySize);
+    }
+
+    // Klasifikasi dengan log probability untuk menghindari underflow
+    classify(tokens) {
+        if (tokens.length === 0) {
+            return { label: 'Netral', probabilities: { Positif: 0.33, Negatif: 0.33, Netral: 0.34 } };
+        }
+
+        const logProbabilities = {};
+
+        for (const label of this.classes) {
+            // Log prior
+            let logProb = Math.log(this.getPriorProbability(label) || 0.001);
+
+            // Sum of log likelihoods
+            for (const token of tokens) {
+                const likelihood = this.getLikelihood(token, label);
+                logProb += Math.log(likelihood || 0.0001);
+            }
+
+            logProbabilities[label] = logProb;
+        }
+
+        // Normalisasi ke probability (softmax-like)
+        const maxLogProb = Math.max(...Object.values(logProbabilities));
+        const expProbs = {};
+        let sumExp = 0;
+
+        for (const label of this.classes) {
+            expProbs[label] = Math.exp(logProbabilities[label] - maxLogProb);
+            sumExp += expProbs[label];
+        }
+
+        const probabilities = {};
+        for (const label of this.classes) {
+            probabilities[label] = expProbs[label] / sumExp;
+        }
+
+        // Cari label dengan probability tertinggi
+        let bestLabel = 'Netral';
+        let bestProb = 0;
+        for (const label of this.classes) {
+            if (probabilities[label] > bestProb) {
+                bestProb = probabilities[label];
+                bestLabel = label;
+            }
+        }
+
+        return { label: bestLabel, probabilities, confidence: bestProb * 100 };
+    }
+
+    // Export model untuk persistensi
+    exportModel() {
+        return {
+            wordCounts: this.wordCounts,
+            classCounts: this.classCounts,
+            totalDocuments: this.totalDocuments,
+            vocabularySize: this.vocabularySize
+        };
+    }
+
+    // Import model
+    importModel(model) {
+        this.wordCounts = model.wordCounts;
+        this.classCounts = model.classCounts;
+        this.totalDocuments = model.totalDocuments;
+        this.vocabularySize = model.vocabularySize;
+        // Rebuild vocabulary
+        this.vocabulary = new Set();
+        for (const label of this.classes) {
+            for (const word of Object.keys(this.wordCounts[label])) {
+                this.vocabulary.add(word);
+            }
+        }
+    }
+}
 
 class ContextAwareSentimentAnalyzer {
     constructor() {
@@ -10,6 +141,95 @@ class ContextAwareSentimentAnalyzer {
         this.buildContextRules();
         this.buildCriticalPhrases();
         this.buildSlangDictionary();
+        
+        // Initialize Naive Bayes classifier
+        this.naiveBayes = new NaiveBayesClassifier();
+        this.trainNaiveBayesFromLexicons();
+    }
+
+    // Train Naive Bayes dengan data dari lexicon
+    trainNaiveBayesFromLexicons() {
+        // Generate training data dari kata-kata di lexicon
+        const trainingData = [];
+
+        // Kata negatif kuat -> banyak contoh negatif
+        for (const word of this.strongNegativeWords) {
+            trainingData.push({ tokens: [word], label: 'Negatif' });
+            trainingData.push({ tokens: [word, 'banget'], label: 'Negatif' });
+            trainingData.push({ tokens: [word, 'sekali'], label: 'Negatif' });
+        }
+
+        // Kata negatif sedang
+        for (const word of this.moderateNegativeWords) {
+            trainingData.push({ tokens: [word], label: 'Negatif' });
+        }
+
+        // Kata negatif ringan
+        for (const word of this.mildNegativeWords) {
+            trainingData.push({ tokens: [word], label: 'Negatif' });
+        }
+
+        // Kata positif kuat
+        for (const word of this.strongPositiveWords) {
+            trainingData.push({ tokens: [word], label: 'Positif' });
+            trainingData.push({ tokens: [word, 'banget'], label: 'Positif' });
+            trainingData.push({ tokens: [word, 'sekali'], label: 'Positif' });
+        }
+
+        // Kata positif sedang
+        for (const word of this.moderatePositiveWords) {
+            trainingData.push({ tokens: [word], label: 'Positif' });
+        }
+
+        // Kata positif ringan
+        for (const word of this.mildPositiveWords) {
+            trainingData.push({ tokens: [word], label: 'Positif' });
+        }
+
+        // Profanity -> sangat negatif
+        for (const word of this.profanity) {
+            trainingData.push({ tokens: [word], label: 'Negatif' });
+            trainingData.push({ tokens: [word], label: 'Negatif' }); // double weight
+        }
+
+        // Tambah contoh netral
+        const neutralWords = ['pemerintah', 'kebijakan', 'program', 'rapat', 'koordinasi', 
+            'membahas', 'mengumumkan', 'menyatakan', 'menjelaskan', 'menteri', 'presiden',
+            'dpr', 'anggota', 'partai', 'politik', 'ekonomi', 'sosial', 'masyarakat',
+            'indonesia', 'jakarta', 'nasional', 'daerah', 'provinsi', 'kabupaten'];
+        
+        for (const word of neutralWords) {
+            trainingData.push({ tokens: [word], label: 'Netral' });
+        }
+
+        // Contoh kalimat untuk training tambahan
+        const sentenceExamples = [
+            { tokens: ['korupsi', 'merajalela', 'dimana', 'mana'], label: 'Negatif' },
+            { tokens: ['gagal', 'total', 'kebijakan', 'ini'], label: 'Negatif' },
+            { tokens: ['luar', 'biasa', 'prestasi', 'membanggakan'], label: 'Positif' },
+            { tokens: ['sukses', 'besar', 'program', 'ini'], label: 'Positif' },
+            { tokens: ['rapat', 'koordinasi', 'dilaksanakan', 'hari', 'ini'], label: 'Netral' },
+            { tokens: ['pemerintah', 'mengumumkan', 'kebijakan', 'baru'], label: 'Netral' },
+            { tokens: ['omong', 'doang', 'tidak', 'ada', 'bukti'], label: 'Negatif' },
+            { tokens: ['janji', 'palsu', 'pembohong'], label: 'Negatif' },
+            { tokens: ['sangat', 'mengecewakan', 'kinerja', 'buruk'], label: 'Negatif' },
+            { tokens: ['terima', 'kasih', 'sudah', 'membantu'], label: 'Positif' },
+            { tokens: ['alhamdulillah', 'berhasil', 'dengan', 'baik'], label: 'Positif' },
+            { tokens: ['kerja', 'bagus', 'lanjutkan'], label: 'Positif' },
+        ];
+
+        trainingData.push(...sentenceExamples);
+
+        // Train model
+        this.naiveBayes.trainBatch(trainingData);
+    }
+
+    // Tambahkan method untuk train dari data eksternal
+    trainFromData(texts, labels) {
+        for (let i = 0; i < texts.length; i++) {
+            const tokens = this.tokenize(texts[i].toLowerCase());
+            this.naiveBayes.train(tokens, labels[i]);
+        }
     }
 
     buildLexicons() {
@@ -450,7 +670,7 @@ class ContextAwareSentimentAnalyzer {
 
     analyze(text) {
         if (!text || typeof text !== 'string' || text.trim().length < 2) {
-            return { score: 0, label: 'Netral', confidence: 0 };
+            return { score: 0, label: 'Netral', confidence: 0, method: 'empty' };
         }
 
         const originalText = text;
@@ -459,14 +679,27 @@ class ContextAwareSentimentAnalyzer {
         const tokens = this.tokenize(lowerText);
         const normalizedTokens = this.tokenize(normalizedText);
 
-        // STEP 1: Check profanity
+        // STEP 1: Check profanity (immediate return)
         for (const token of tokens) {
             if (this.profanity.has(token)) {
-                return { score: -10, label: 'Negatif', confidence: 99 };
+                return { score: -10, label: 'Negatif', confidence: 99, method: 'profanity' };
             }
         }
 
-        // STEP 2: Check critical phrases
+        // STEP 2: Rule-based analysis (untuk pattern yang jelas)
+        const ruleResult = this.analyzeWithRules(lowerText, normalizedText, tokens, normalizedTokens, originalText);
+        
+        // STEP 3: Naive Bayes classification
+        const nbResult = this.naiveBayes.classify(normalizedTokens);
+
+        // STEP 4: Combine results dengan weighted voting
+        const finalResult = this.combineResults(ruleResult, nbResult, tokens);
+
+        return finalResult;
+    }
+
+    analyzeWithRules(lowerText, normalizedText, tokens, normalizedTokens, originalText) {
+        // Check critical phrases
         let phraseScore = 0;
         for (const item of this.criticalPhrases) {
             if (item.pattern.test(lowerText) || item.pattern.test(normalizedText)) {
@@ -474,11 +707,7 @@ class ContextAwareSentimentAnalyzer {
             }
         }
 
-        if (phraseScore <= -6) {
-            return { score: phraseScore, label: 'Negatif', confidence: Math.min(99, 70 + Math.abs(phraseScore) * 3) };
-        }
-
-        // STEP 3: Apply context rules
+        // Apply context rules
         let contextScore = 0;
         for (const rule of this.contextRules) {
             if (rule.test(lowerText) || rule.test(normalizedText)) {
@@ -486,11 +715,7 @@ class ContextAwareSentimentAnalyzer {
             }
         }
 
-        if (contextScore <= -4) {
-            return { score: contextScore + phraseScore, label: 'Negatif', confidence: Math.min(99, 65 + Math.abs(contextScore) * 3) };
-        }
-
-        // STEP 4: Check positive rules
+        // Check positive rules
         let positiveScore = 0;
         for (const rule of this.positiveRules) {
             if (rule.test(lowerText) || rule.test(normalizedText)) {
@@ -498,37 +723,80 @@ class ContextAwareSentimentAnalyzer {
             }
         }
 
-        if (positiveScore >= 5 && contextScore >= -2 && phraseScore >= -3) {
-            return { score: positiveScore, label: 'Positif', confidence: Math.min(99, 70 + positiveScore * 3) };
-        }
-
-        // STEP 5: Lexicon scoring
+        // Lexicon scoring
         let lexiconScore = this.calculateLexiconScore(tokens);
         let normalizedLexiconScore = this.calculateLexiconScore(normalizedTokens);
         lexiconScore = Math.min(lexiconScore, normalizedLexiconScore);
 
-        // STEP 6: Combine scores
+        // Combine scores
         let totalScore = contextScore + positiveScore + lexiconScore + phraseScore;
 
-        // STEP 7: Additional adjustments
-        const qCount = (text.match(/\?/g) || []).length;
+        // Additional adjustments
+        const qCount = (originalText.match(/\?/g) || []).length;
         if (qCount > 0 && totalScore < 2) totalScore -= qCount * 1.5;
 
-        const exclCount = (text.match(/!/g) || []).length;
+        const exclCount = (originalText.match(/!/g) || []).length;
         if (exclCount >= 2) totalScore *= 1.15;
 
-        const capsRatio = (text.match(/[A-Z]/g) || []).length / Math.max(text.length, 1);
+        const capsRatio = (originalText.match(/[A-Z]/g) || []).length / Math.max(originalText.length, 1);
         if (capsRatio > 0.4) totalScore *= 1.2;
 
-        if (/\.{2,}\s*$/.test(text)) totalScore -= 2;
+        if (/\.{2,}\s*$/.test(originalText)) totalScore -= 2;
 
-        const negEmoji = (text.match(/[😢😭😤😡🤬😠👎💔😞😔🤮😒😑🙄💩🤡]/g) || []).length;
+        const negEmoji = (originalText.match(/[😢😭😤😡🤬😠👎💔😞😔🤮😒😑🙄💩🤡]/g) || []).length;
         if (negEmoji > 0) totalScore -= negEmoji * 2;
 
-        const posEmoji = (text.match(/[😀😃😄😁😊🥰😍🤩👍👏🎉✨💪🔥❤️💯🙏]/g) || []).length;
-        if (posEmoji > 0 && !this.hasSarcasmIndicator(text) && totalScore > 0) totalScore += posEmoji * 1.5;
+        const posEmoji = (originalText.match(/[😀😃😄😁😊🥰😍🤩👍👏🎉✨💪🔥❤️💯🙏]/g) || []).length;
+        if (posEmoji > 0 && !this.hasSarcasmIndicator(originalText) && totalScore > 0) totalScore += posEmoji * 1.5;
 
         return this.determineLabel(totalScore);
+    }
+
+    combineResults(ruleResult, nbResult, tokens) {
+        const ruleScore = ruleResult.score;
+        const ruleConfidence = ruleResult.confidence;
+        const nbConfidence = nbResult.confidence;
+
+        // Jika rule-based sangat yakin (score ekstrim), prioritaskan rule
+        if (Math.abs(ruleScore) >= 6 && ruleConfidence > 75) {
+            return { 
+                ...ruleResult, 
+                method: 'rule-based',
+                nbProbabilities: nbResult.probabilities 
+            };
+        }
+
+        // Jika Naive Bayes sangat yakin dan rule tidak terlalu yakin
+        if (nbConfidence > 70 && Math.abs(ruleScore) < 4) {
+            // Weighted combination
+            const weights = { rule: 0.4, nb: 0.6 };
+            
+            let combinedLabel;
+            if (ruleResult.label === nbResult.label) {
+                combinedLabel = ruleResult.label;
+            } else if (nbConfidence > 80) {
+                combinedLabel = nbResult.label;
+            } else {
+                combinedLabel = ruleResult.label;
+            }
+
+            const combinedConfidence = (ruleConfidence * weights.rule + nbConfidence * weights.nb);
+
+            return {
+                score: ruleScore,
+                label: combinedLabel,
+                confidence: Math.min(99, combinedConfidence),
+                method: 'hybrid',
+                nbProbabilities: nbResult.probabilities
+            };
+        }
+
+        // Default: gunakan rule-based dengan info NB
+        return { 
+            ...ruleResult, 
+            method: 'rule-based',
+            nbProbabilities: nbResult.probabilities 
+        };
     }
 
     calculateLexiconScore(tokens) {
@@ -589,6 +857,16 @@ class ContextAwareSentimentAnalyzer {
     analyzeBatch(texts) {
         return texts.map(t => this.analyze(t));
     }
+
+    // Export Naive Bayes model
+    exportNBModel() {
+        return this.naiveBayes.exportModel();
+    }
+
+    // Import Naive Bayes model
+    importNBModel(model) {
+        this.naiveBayes.importModel(model);
+    }
 }
 
 const analyzer = new ContextAwareSentimentAnalyzer();
@@ -596,11 +874,15 @@ const analyzer = new ContextAwareSentimentAnalyzer();
 module.exports = {
     analyze: (text) => analyzer.analyze(text),
     analyzeBatch: (texts) => analyzer.analyzeBatch(texts),
-    ContextAwareSentimentAnalyzer
+    trainFromData: (texts, labels) => analyzer.trainFromData(texts, labels),
+    exportModel: () => analyzer.exportNBModel(),
+    importModel: (model) => analyzer.importNBModel(model),
+    ContextAwareSentimentAnalyzer,
+    NaiveBayesClassifier
 };
 
 if (require.main === module) {
-    console.log("🎯 SENTIMENT ANALYZER v7.0 - ULTRA WIDE COVERAGE\n");
+    console.log("🎯 SENTIMENT ANALYZER v8.0 - WITH NAIVE BAYES\n");
     
     const tests = [
         { text: "Omdo doang", expected: "Negatif" },
@@ -631,8 +913,15 @@ if (require.main === module) {
         const ok = r.label === t.expected;
         if (ok) correct++;
         console.log(`${ok ? '✅' : '❌'} ${i+1}. "${t.text.substring(0,55)}${t.text.length > 55 ? '...' : ''}"`);
-        console.log(`   Expected: ${t.expected} | Got: ${r.label} (${r.score})\n`);
+        console.log(`   Expected: ${t.expected} | Got: ${r.label} (score: ${r.score}, method: ${r.method})`);
+        if (r.nbProbabilities) {
+            console.log(`   NB Probs: P=${(r.nbProbabilities.Positif*100).toFixed(1)}% N=${(r.nbProbabilities.Negatif*100).toFixed(1)}% Neu=${(r.nbProbabilities.Netral*100).toFixed(1)}%`);
+        }
+        console.log();
     });
 
     console.log(`\n📊 ACCURACY: ${correct}/${tests.length} (${(correct/tests.length*100).toFixed(1)}%)`);
+    console.log(`\n📈 Naive Bayes Model Stats:`);
+    console.log(`   Total training documents: ${analyzer.naiveBayes.totalDocuments}`);
+    console.log(`   Vocabulary size: ${analyzer.naiveBayes.vocabularySize}`);
 }
