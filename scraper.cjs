@@ -128,6 +128,8 @@ puppeteer.use(StealthPlugin());
 
         // 4. FORMAT & ANALISIS
         const finalResults = [];
+        const scrapedAt = new Date().toISOString(); // Waktu scraping
+        
         for (const [id, data] of collectedTweets) {
             const analysis = Analyzer.analyze(data.full_text);
 
@@ -139,6 +141,7 @@ puppeteer.use(StealthPlugin());
                 likes: Math.floor(Math.random() * 500),
                 retweets: Math.floor(Math.random() * 200),
                 created_at_twitter: data.created_at,
+                scraped_at: scrapedAt, // Tanggal & waktu scraping
                 sentiment_score: analysis.score,
                 sentiment_label: analysis.label
             });

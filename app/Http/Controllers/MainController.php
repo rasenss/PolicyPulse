@@ -12,29 +12,25 @@ class MainController extends Controller
 {
     public function index()
     {
-        // Cache Dashboard 60 menit
-        $data = Cache::remember('dashboard_stats', 60*60, function () {
-            $policies = Policy::select('id', 'title', 'description', 'official_tweet_url')
+        $policies = Policy::select('id', 'title', 'description', 'official_tweet_url')
                         ->withCount('tweets')
                         ->get();
-            $total = Tweet::count();
-            $stats = Tweet::select('sentiment_label', DB::raw('count(*) as total'))
+                        
+        $total = Tweet::count();
+        
+        $stats = Tweet::select('sentiment_label', DB::raw('count(*) as total'))
                 ->groupBy('sentiment_label')
                 ->pluck('total', 'sentiment_label')
                 ->toArray();
-            return compact('policies', 'total', 'stats');
-        });
 
-        return view('dashboard', $data);
+        return view('dashboard', compact('policies', 'total', 'stats'));
     }
 
     public function policy($id)
     {
-        // JANGAN CACHE agar data selalu fresh, dan ambil SEMUA tweets
         $policy = Policy::with(['tweets' => function($q) {
             $q->latest('created_at_twitter')
               ->select('id', 'policy_id', 'username', 'full_text', 'sentiment_label', 'sentiment_score', 'likes', 'retweets', 'created_at_twitter');
-            // TIDAK ADA LIMIT - ambil semua
         }])->findOrFail($id);
 
         $stats = $policy->tweets()
@@ -53,20 +49,17 @@ class MainController extends Controller
 
     public function quiz()
     {
-        // JANGAN DI-CACHE AGAR SELALU ACAK/FRESH SETIAP RELOAD
-        // Ambil 40 soal MCQ secara acak
         $mcqs = DB::table('questions')
                 ->select('id', 'question_text', 'options')
                 ->where('type', 'mcq')
-                ->inRandomOrder() // Acak urutan
+                ->inRandomOrder()
                 ->limit(40)
                 ->get();
 
-        // Ambil 10 soal Essay secara acak
         $essays = DB::table('questions')
                 ->select('id', 'question_text')
                 ->where('type', 'essay')
-                ->inRandomOrder() // Acak urutan
+                ->inRandomOrder()
                 ->limit(10)
                 ->get();
         
@@ -82,7 +75,6 @@ class MainController extends Controller
         $totalMcq = 40;
         $review = [];
 
-        // Ambil semua soal MCQ yang dijawab
         $mcqIds = array_keys($userAnswers);
         $mcqQuestions = [];
         if(!empty($mcqIds)) {
@@ -92,7 +84,6 @@ class MainController extends Controller
                 ->keyBy('id');
         }
 
-        // Hitung Skor MCQ & Siapkan Review
         foreach($userAnswers as $id => $ans) {
             if(isset($mcqQuestions[$id])) {
                 $q = $mcqQuestions[$id];
@@ -115,7 +106,6 @@ class MainController extends Controller
             }
         }
 
-        // Ambil soal Essay yang dijawab
         $essayIds = array_keys($essayAnswers);
         if(!empty($essayIds)) {
             $essayQuestions = DB::table('questions')
@@ -126,8 +116,6 @@ class MainController extends Controller
             foreach($essayAnswers as $id => $ans) {
                 if(isset($essayQuestions[$id])) {
                     $q = $essayQuestions[$id];
-                    
-                    // Skor essay sederhana berdasarkan panjang jawaban (bisa diganti AI grading)
                     $essayScore = 0;
                     $wordCount = str_word_count($ans);
                     if($wordCount >= 100) $essayScore = 80;
@@ -150,10 +138,8 @@ class MainController extends Controller
             }
         }
 
-        // Hitung Nilai Akhir (MCQ saja untuk skor utama)
         $final = ($score / $totalMcq) * 100;
         
-        // Tentukan Predikat
         $grade = 'Pemula';
         if($final >= 85) $grade = 'Ahli Strategi (Expert)';
         elseif($final >= 70) $grade = 'Analis Senior';

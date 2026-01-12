@@ -102,7 +102,15 @@
                         </div>
                         <div>
                             <div class="text-sm font-bold text-stone-900">{{ '@' . $tweet->username }}</div>
-                            <div class="text-xs text-stone-400">{{ \Carbon\Carbon::parse($tweet->created_at_twitter)->diffForHumans() }}</div>
+                            <div class="text-xs text-stone-400">
+                                @if($tweet->created_at_twitter)
+                                    {{ \Carbon\Carbon::parse($tweet->created_at_twitter)->format('d M Y, H:i') }}
+                                    <span class="text-stone-300">•</span>
+                                    {{ \Carbon\Carbon::parse($tweet->created_at_twitter)->diffForHumans() }}
+                                @else
+                                    {{ $tweet->created_at->diffForHumans() }}
+                                @endif
+                            </div>
                         </div>
                     </div>
                     <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide 

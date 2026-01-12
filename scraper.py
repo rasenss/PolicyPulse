@@ -2,6 +2,7 @@ import asyncio
 import json
 import sys
 import random
+from datetime import datetime
 # Pastikan install: pip install twikit textblob
 from twikit import Client
 from textblob import TextBlob
@@ -43,6 +44,8 @@ async def main():
                     if score > 0.1: label = 'Positif'
                     elif score < -0.1: label = 'Negatif'
 
+                    scraped_at = datetime.now().isoformat()
+
                     results.append({
                         'policy_id': p['id'],
                         'tweet_id': t.id,
@@ -51,6 +54,7 @@ async def main():
                         'likes': t.favorite_count,
                         'retweets': t.retweet_count,
                         'created_at_twitter': t.created_at,
+                        'scraped_at': scraped_at,  # Tanggal & waktu scraping
                         'sentiment_score': score,
                         'sentiment_label': label
                     })
